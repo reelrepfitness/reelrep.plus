@@ -31,7 +31,7 @@ import {
 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Stack } from 'expo-router';
+import { Stack, Link } from 'expo-router';
 
 
 
@@ -111,37 +111,63 @@ const FadeInView = ({ children, delay = 0 }: { children: React.ReactNode, delay?
 
 
 
-// --- Reusable Glassmorphism Style ---
+// --- Components ---
 
-const glassmorphismStyle = {
 
-  backgroundColor: 'rgba(255, 255, 255, 0.9)',
 
-  borderRadius: 24,
+// Countdown Timer Component
 
-  shadowColor: '#000',
+const CountdownTimer = ({ compact = false }: { compact?: boolean }) => {
 
-  shadowOpacity: 0.06,
+    // Initialize with 4 hours 34 min 11 sec (16451 seconds)
 
-  shadowRadius: 15,
+    const [timeLeft, setTimeLeft] = useState(16451);
 
-  shadowOffset: { width: 0, height: 8 },
 
-  borderWidth: 1,
 
-  borderColor: COLORS.glassBorder,
+    useEffect(() => {
+
+        const timer = setInterval(() => {
+
+            setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+
+        }, 1000);
+
+        return () => clearInterval(timer);
+
+    }, []);
+
+
+
+    const hours = Math.floor(timeLeft / 3600);
+
+    const minutes = Math.floor((timeLeft % 3600) / 60);
+
+    const seconds = timeLeft % 60;
+
+
+
+    return (
+
+        <View style={compact ? styles.timerCompact : styles.timerContainer}>
+
+            <Text style={compact ? styles.timerTextCompact : styles.timerText}>
+
+                {String(hours).padStart(2, '0')}:{String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+
+            </Text>
+
+        </View>
+
+    );
 
 };
 
 
 
-// --- Components ---
-
-
-
 const Navbar = ({ onScrollToForm }: { onScrollToForm: () => void }) => (
 
-    <View style={styles.navbar}>
+    <View style={styles.fixedHeader}>
 
         <Image
 
@@ -153,11 +179,23 @@ const Navbar = ({ onScrollToForm }: { onScrollToForm: () => void }) => (
 
         />
 
-        <TouchableOpacity style={styles.navButton} onPress={onScrollToForm}>
+        <Text style={styles.navbarPromoText}>חודש ראשון מתנה לנרשמים עכשיו</Text>
 
-            <Text style={styles.navButtonText}>הרשמה מוקדמת</Text>
+        <View style={styles.navbarButtonRow}>
 
-        </TouchableOpacity>
+            <TouchableOpacity style={styles.navButton} onPress={onScrollToForm}>
+
+                <Text style={styles.navButtonText}>הרשמה מוקדמת</Text>
+
+            </TouchableOpacity>
+
+            <View style={styles.navbarTimerBox}>
+
+                <CountdownTimer compact />
+
+            </View>
+
+        </View>
 
     </View>
 
@@ -307,9 +345,9 @@ const DoingItRightSection = ({ width }: { width: number }) => {
 
             title: 'לא שוקלים אוכל',
 
-            titleUnderline: 'לא', // Word to underline
+            titleUnderline: 'לא',
 
-            description: 'כל השקילות והחישובים נעשו מראש, כדי שלכם יהיה קל יותר.'
+            description: 'כל השקילות והחישובים נעשו מראש,\nכדי שלכם יהיה קל יותר.'
 
         },
 
@@ -319,7 +357,7 @@ const DoingItRightSection = ({ width }: { width: number }) => {
 
             title: ' זה לא מידע, זה ידע. ',
 
-            description: 'אפלקציה שנבנתה ע״י דיאטנים קליניים ובוגרי תואר ראשון בתזונה.'
+            description: 'אפלקציה שנבנתה ע״י דיאטנים קליניים\nובוגרי תואר ראשון בתזונה.'
 
         },
 
@@ -329,7 +367,7 @@ const DoingItRightSection = ({ width }: { width: number }) => {
 
             title: 'זה לא דיאטה',
 
-            description: 'דיאטה זה זמני. כאן נהפוך לך את זה לאורח חיים.'
+            description: 'דיאטה זה זמני.\nכאן נהפוך לך את זה לאורח חיים.'
 
         }
 
@@ -394,35 +432,22 @@ const DoingItRightSection = ({ width }: { width: number }) => {
                                 <View style={styles.principleIconWrapper}>
 
                                     <Image
-
                                         source={item.icon}
-
                                         style={styles.principleIcon}
-
                                         resizeMode="contain"
-
                                     />
 
                                 </View>
 
                                 <Text style={styles.principleTitle}>
-
                                     {item.titleUnderline ? (
-
                                         <>
-
                                             <Text style={{ textDecorationLine: 'underline' }}>{item.titleUnderline}</Text>
-
                                             {item.title.replace(item.titleUnderline, '')}
-
                                         </>
-
                                     ) : (
-
                                         item.title
-
                                     )}
-
                                 </Text>
 
                                 <Text style={styles.principleDescription}>{item.description}</Text>
@@ -457,8 +482,6 @@ const DoingItRightSection = ({ width }: { width: number }) => {
 
 const ValuePropositionSection = ({ width }: { width: number }) => {
 
-    const isMobile = width < 768;
-
     const macros = [
 
         { title: "מנת חלבון", badge: "כ-200 קלוריות למנה", examples: ["3 חתיכות חזה עוף", "גביע קוטג׳"], icon: require('../assets/images/protein.png') },
@@ -477,86 +500,175 @@ const ValuePropositionSection = ({ width }: { width: number }) => {
 
     return (
 
-        <View style={{ marginVertical: 60 }}>
+        <View style={styles.cavedSection}>
 
-            {/* "Meet them" intro */}
+            <LinearGradient
 
-            <FadeInView delay={0}>
+                colors={['#1c1c1c', '#152b2b', '#1c1c1c']}
 
-                <View style={styles.meetThemSection}>
+                start={{ x: 0, y: 0 }}
 
-                    <View style={styles.dividerLine} />
+                end={{ x: 1, y: 1 }}
 
-                    <Text style={styles.meetThemText}>תכירו אותם:</Text>
+                style={styles.cavedGradient}
+
+            >
+
+                {/* "Meet them" intro */}
+
+                <FadeInView delay={0}>
+
+                    <View style={styles.meetThemSection}>
+
+                        <View style={styles.dividerLine} />
+
+                        <Text style={[styles.meetThemText, { color: '#e0e0e0' }]}>תכירו אותם:</Text>
+
+                    </View>
+
+                </FadeInView>
+
+
+
+                {/* Macro Cards */}
+
+                <View style={{ gap: 24, paddingHorizontal: 20, marginTop: 30 }}>
+
+                    {macros.map((item, index) => {
+
+                        const isEven = index % 2 === 0;
+
+                        return (
+
+                            <FadeInView key={index} delay={300 + index * 100}>
+
+                                <View style={[
+
+                                    styles.macroCardContainer,
+
+                                    { flexDirection: isEven ? 'row' : 'row-reverse' }
+
+                                ]}>
+
+                                    <View style={styles.macroImageWrapper}>
+
+                                        <Image source={item.icon} style={styles.macroImage} />
+
+                                    </View>
+
+                                    <View style={styles.macroContentBox}>
+
+                                        <Text style={styles.macroTitle}>{item.title}</Text>
+
+                                        <Text style={styles.macroBadge}>{item.badge}</Text>
+
+                                        <View style={styles.divider} />
+
+                                        {item.examples.map((example, i) => (
+
+                                            <View key={i} style={styles.checkItemRow}>
+
+                                                <Feather name="check" size={14} color="#1FA09B" />
+
+                                                <Text style={styles.checkItemText}>{example}</Text>
+
+                                            </View>
+
+                                        ))}
+
+                                    </View>
+
+                                </View>
+
+                            </FadeInView>
+
+                        );
+
+                    })}
 
                 </View>
 
-            </FadeInView>
-
-
-
-            {/* Macro Cards */}
-
-            <View style={{ gap: 24, paddingHorizontal: 20, marginTop: 30 }}>
-
-                {macros.map((item, index) => {
-
-                    const isEven = index % 2 === 0;
-
-                    return (
-
-                        <FadeInView key={index} delay={300 + index * 100}>
-
-                            <View style={[
-
-                                styles.macroCardContainer,
-
-                                { flexDirection: isEven ? 'row' : 'row-reverse' }
-
-                            ]}>
-
-                                <View style={styles.macroImageWrapper}>
-
-                                    <Image source={item.icon} style={styles.macroImage} />
-
-                                </View>
-
-                                <View style={[glassmorphismStyle, styles.macroContentBox]}>
-
-                                    <Text style={styles.macroTitle}>{item.title}</Text>
-
-                                    <Text style={styles.macroBadge}>{item.badge}</Text>
-
-                                    <View style={styles.divider} />
-
-                                    {item.examples.map((example, i) => (
-
-                                        <View key={i} style={styles.checkItemRow}>
-
-                                            <Feather name="check" size={14} color="#1FA09B" />
-
-                                            <Text style={styles.checkItemText}>{example}</Text>
-
-                                        </View>
-
-                                    ))}
-
-                                </View>
-
-                            </View>
-
-                        </FadeInView>
-
-                    );
-
-                })}
-
-            </View>
+            </LinearGradient>
 
         </View>
 
     );
 
+};
+
+
+
+// --- Testimonials Section ---
+
+const TestimonialsSection = ({ width }: { width: number }) => {
+    const isDesktop = width >= 768;
+
+    const testimonials = [
+        {
+            text: 'סוף סוף אפליקציה שמבינה אותי. לא צריך לשקול כל דבר, הכל כבר מחושב.',
+            author: 'שירה מתל אביב',
+            rating: 5
+        },
+        {
+            text: 'התחלתי להשתמש באפליקציה לפני חודשיים והיא שינתה לי את החיים. עכשיו אני יודעת בדיוק מה אני אוכלת.',
+            author: 'דני מירושלים',
+            rating: 5
+        },
+        {
+            text: 'המדריכים והמתכונים עוזרים לי לשמור על המסלול. זה לא עוד דיאטה, זה באמת אורח חיים.',
+            author: 'מיכל מחיפה',
+            rating: 5
+        }
+    ];
+
+    return (
+        <View style={{ paddingVertical: 60, backgroundColor: COLORS.background }}>
+            <FadeInView delay={0}>
+                <Text style={[styles.sectionHeader, { fontSize: 32, fontWeight: '800', textAlign: 'center', marginBottom: 40 }]}>
+                    מה המשתמשים שלנו אומרים?
+                </Text>
+            </FadeInView>
+
+            <RNScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{
+                    paddingHorizontal: isDesktop ? 60 : 20,
+                    gap: 24
+                }}
+                style={{ marginTop: 20 }}
+            >
+                {testimonials.map((testimonial, index) => (
+                    <FadeInView key={index} delay={100 + index * 100}>
+                        <LinearGradient
+                            colors={['rgba(31, 160, 155, 0.15)', 'rgba(31, 160, 155, 0.05)']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={styles.testimonialCard}
+                        >
+                            {/* Quote Icon */}
+                            <Text style={styles.quoteIcon}>"</Text>
+
+                            {/* Testimonial Text */}
+                            <Text style={styles.testimonialText}>{testimonial.text}</Text>
+
+                            {/* Bottom Section - Author and Stars */}
+                            <View>
+                                <Text style={styles.testimonialAuthor}>{testimonial.author}</Text>
+
+                                {/* Star Rating */}
+                                <View style={styles.starsContainer}>
+                                    {[...Array(testimonial.rating)].map((_, i) => (
+                                        <Feather key={i} name="star" size={16} color="#FFD700" style={{ marginLeft: 4 }} />
+                                    ))}
+                                </View>
+                            </View>
+                        </LinearGradient>
+                    </FadeInView>
+                ))}
+            </RNScrollView>
+        </View>
+    );
 };
 
 
@@ -741,11 +853,23 @@ const PreOrderForm = () => {
 
                 <Text style={styles.preOrderTitle}>הצטרפו למהפכה!</Text>
 
-                <Text style={styles.preOrderSubtitle}>
+                <View style={styles.preOrderPromoBox}>
 
-                    מי שנרשם להזמנה מוקדמת - מקבל חודש ראשון מתנה 🎁
+                    <Text style={styles.preOrderSubtitle}>
 
-                </Text>
+                        מי שנרשם להזמנה מוקדמת - מקבל חודש ראשון מתנה 🎁
+
+                    </Text>
+
+                    <View style={styles.preOrderTimerWrapper}>
+
+                        <Text style={styles.preOrderTimerLabel}>הצעה מסתיימת בעוד:</Text>
+
+                        <CountdownTimer />
+
+                    </View>
+
+                </View>
 
                 <Text style={styles.preOrderLabel}>השאירו פרטים ונדאג לעדכן אתכם כשהאפליקציה באוויר</Text>
 
@@ -849,7 +973,15 @@ const Footer = () => (
 
             <Text style={styles.footerLink}>צור קשר</Text>
 
-            <Text style={styles.footerLink}>פרטיות</Text>
+            <Link href="/privacy" asChild>
+
+                <TouchableOpacity>
+
+                    <Text style={styles.footerLink}>פרטיות</Text>
+
+                </TouchableOpacity>
+
+            </Link>
 
         </View>
 
@@ -938,9 +1070,11 @@ export default function LandingPage() {
 
       <Stack.Screen options={{ headerShown: false }} />
 
-      <FadeInView delay={0}><Navbar onScrollToForm={scrollToForm} /></FadeInView>
 
-      
+
+      <Navbar onScrollToForm={scrollToForm} />
+
+
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
 
@@ -968,15 +1102,11 @@ export default function LandingPage() {
 
 
 
-            <View style={styles.contentWrapper}>
-
-              <ValuePropositionSection width={width} />
-
-            </View>
+            <ValuePropositionSection width={width} />
 
 
 
-            <View style={{ backgroundColor: COLORS.background, paddingTop: 40, paddingBottom: 20 }}>
+            <View style={styles.featuresHeaderSection}>
 
                  <Text style={[styles.sectionHeader, { fontSize: 32, fontWeight: '800', textAlign: 'center' }]}>מה אתם מקבלים?</Text>
 
@@ -993,6 +1123,10 @@ export default function LandingPage() {
                 ))}
 
             </View>
+
+
+
+            <TestimonialsSection width={width} />
 
 
 
@@ -1040,23 +1174,45 @@ const styles = StyleSheet.create({
 
   },
 
-  navbar: {
+  fixedHeader: {
 
-    flexDirection: 'row-reverse',
+    position: 'absolute',
 
-    justifyContent: 'space-between',
+    top: 0,
+
+    left: 0,
+
+    right: 0,
+
+    flexDirection: 'column',
+
+    justifyContent: 'center',
 
     alignItems: 'center',
 
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
 
-    paddingVertical: 10,
+    paddingTop: Platform.OS === 'ios' ? 50 : 16,
 
-    zIndex: 999,
+    paddingBottom: 20,
 
     backgroundColor: COLORS.background,
 
-    marginTop: 0,
+    borderBottomLeftRadius: 20,
+
+    borderBottomRightRadius: 20,
+
+    shadowColor: '#000',
+
+    shadowOffset: { width: 0, height: 3 },
+
+    shadowOpacity: 0.1,
+
+    shadowRadius: 8,
+
+    elevation: 5,
+
+    zIndex: 9999,
 
   },
 
@@ -1064,11 +1220,17 @@ const styles = StyleSheet.create({
 
     backgroundColor: COLORS.primary,
 
-    paddingVertical: 8,
+    paddingVertical: 10,
 
-    paddingHorizontal: 16,
+    paddingHorizontal: 24,
 
     borderRadius: 50,
+
+    flex: 1,
+
+    maxWidth: 150,
+
+    alignItems: 'center',
 
   },
 
@@ -1084,9 +1246,11 @@ const styles = StyleSheet.create({
 
   navbarLogo: {
 
-    width: 140,
+    width: 200,
 
-    height: 35,
+    height: 50,
+
+    marginBottom: 12,
 
   },
 
@@ -1100,7 +1264,7 @@ const styles = StyleSheet.create({
 
     justifyContent: 'flex-start',
 
-    paddingTop: 40,
+    paddingTop: Platform.OS === 'ios' ? 170 : 136,
 
     paddingBottom: 40,
 
@@ -1188,6 +1352,28 @@ const styles = StyleSheet.create({
 
       alignItems: 'center',
 
+      zIndex: 2,
+
+      position: 'relative',
+
+      marginBottom: -40,
+
+      paddingBottom: 120,
+
+      borderBottomLeftRadius: 40,
+
+      borderBottomRightRadius: 40,
+
+      shadowColor: '#000',
+
+      shadowOffset: { width: 0, height: 15 },
+
+      shadowOpacity: 0.2,
+
+      shadowRadius: 25,
+
+      elevation: 5,
+
   },
 
   doingItRightTitle: {
@@ -1240,11 +1426,11 @@ const styles = StyleSheet.create({
 
   principleIconWrapper: {
 
-      marginBottom: 24,
-
       alignItems: 'center',
 
       justifyContent: 'center',
+
+      marginBottom: 24,
 
   },
 
@@ -1283,6 +1469,8 @@ const styles = StyleSheet.create({
       textAlign: 'center',
 
       lineHeight: 26,
+
+      maxWidth: 280,
 
   },
 
@@ -1414,11 +1602,71 @@ const styles = StyleSheet.create({
 
   },
 
+  cavedSection: {
+
+      marginHorizontal: 0,
+
+      marginTop: 0,
+
+      marginBottom: 0,
+
+      overflow: 'hidden',
+
+      shadowColor: '#000',
+
+      shadowOffset: { width: 0, height: -4 },
+
+      shadowOpacity: 0.3,
+
+      shadowRadius: 15,
+
+      elevation: 1,
+
+      zIndex: 1,
+
+      position: 'relative',
+
+  },
+
+  cavedGradient: {
+
+      paddingTop: 100,
+
+      paddingBottom: 100,
+
+      paddingHorizontal: 0,
+
+      borderRadius: 0,
+
+  },
+
+  featuresHeaderSection: {
+
+      backgroundColor: COLORS.background,
+
+      paddingTop: 50,
+
+      paddingBottom: 20,
+
+      marginTop: -50,
+
+      borderTopLeftRadius: 40,
+
+      borderTopRightRadius: 40,
+
+      overflow: 'hidden',
+
+      zIndex: 2,
+
+      position: 'relative',
+
+  },
+
   meetThemSection: {
 
       alignItems: 'center',
 
-      marginTop: 50,
+      marginTop: 0,
 
       marginBottom: 10,
 
@@ -1432,7 +1680,7 @@ const styles = StyleSheet.create({
 
       backgroundColor: '#1FA09B',
 
-      borderRadius: 2,
+      borderRadius: 10,
 
       marginBottom: 20,
 
@@ -1494,7 +1742,23 @@ const styles = StyleSheet.create({
 
       padding: 16,
 
-      backgroundColor: '#fff',
+      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+
+      backdropFilter: 'blur(10px)',
+
+      borderWidth: 1,
+
+      borderColor: 'rgba(255, 255, 255, 0.25)',
+
+      borderRadius: 24,
+
+      shadowColor: '#000',
+
+      shadowOpacity: 0.15,
+
+      shadowRadius: 20,
+
+      shadowOffset: { width: 0, height: 10 },
 
   },
 
@@ -1504,7 +1768,7 @@ const styles = StyleSheet.create({
 
       fontSize: 20,
 
-      color: COLORS.textDark,
+      color: '#ffffff',
 
       textAlign: 'right',
 
@@ -1518,7 +1782,7 @@ const styles = StyleSheet.create({
 
       fontSize: 14,
 
-      color: COLORS.primary,
+      color: '#1FA09B',
 
       textAlign: 'right',
 
@@ -1530,7 +1794,7 @@ const styles = StyleSheet.create({
 
       height: 1,
 
-      backgroundColor: '#eee',
+      backgroundColor: 'rgba(255, 255, 255, 0.2)',
 
       width: '100%',
 
@@ -1556,7 +1820,7 @@ const styles = StyleSheet.create({
 
       fontSize: 14,
 
-      color: '#555',
+      color: 'rgba(255, 255, 255, 0.9)',
 
       textAlign: 'right',
 
@@ -1572,7 +1836,9 @@ const styles = StyleSheet.create({
 
       paddingBottom: 40,
 
-      alignItems: 'center', // Center cards on desktop
+      backgroundColor: COLORS.background,
+
+      alignItems: 'center',
 
   },
 
@@ -1584,23 +1850,27 @@ const styles = StyleSheet.create({
 
     marginBottom: 30,
 
-    shadowColor: "#000",
+    shadowColor: "#1FA09B",
 
-    shadowOffset: { width: 0, height: 10 },
+    shadowOffset: { width: 0, height: 8 },
 
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.25,
 
     shadowRadius: 20,
 
-    elevation: 5,
+    elevation: 15,
 
-    overflow: 'hidden', // CRITICAL: Cuts off the bottom
+    overflow: 'visible',
 
-    padding: 0,         // CRITICAL: Full bleed
+    padding: 0,
 
-    maxWidth: 700,      // Smaller for dramatic zigzag effect
+    maxWidth: 700,
 
-    width: '100%',      // Full width up to max
+    width: '100%',
+
+    zIndex: 10,
+
+    position: 'relative',
 
   },
 
@@ -1881,6 +2151,210 @@ const styles = StyleSheet.create({
     fontFamily: 'Rubik_600SemiBold',
 
     fontSize: 14,
+
+  },
+
+  // --- Testimonials ---
+
+  testimonialCard: {
+
+    width: 380,
+
+    height: 320,
+
+    padding: 40,
+
+    borderRadius: 24,
+
+    justifyContent: 'space-between',
+
+  },
+
+  quoteIcon: {
+
+    fontSize: 80,
+
+    color: 'rgba(31, 160, 155, 0.2)',
+
+    fontFamily: 'Rubik_700Bold',
+
+    lineHeight: 80,
+
+    marginBottom: -20,
+
+  },
+
+  testimonialText: {
+
+    fontSize: 18,
+
+    color: COLORS.textDark,
+
+    fontFamily: 'Rubik_400Regular',
+
+    lineHeight: 28,
+
+    flex: 1,
+
+    textAlign: 'right',
+
+  },
+
+  testimonialAuthor: {
+
+    fontSize: 16,
+
+    color: COLORS.textDark,
+
+    fontFamily: 'Rubik_600SemiBold',
+
+    marginBottom: 12,
+
+    textAlign: 'right',
+
+  },
+
+  starsContainer: {
+
+    flexDirection: 'row-reverse',
+
+    alignItems: 'center',
+
+  },
+
+
+
+  // --- Navbar Promo & Timer ---
+
+  navbarPromoText: {
+
+    fontFamily: 'Rubik_600SemiBold',
+
+    fontSize: 12,
+
+    color: COLORS.textDark,
+
+    marginBottom: 10,
+
+    textAlign: 'center',
+
+  },
+
+  navbarButtonRow: {
+
+    flexDirection: 'row-reverse',
+
+    alignItems: 'center',
+
+    justifyContent: 'center',
+
+    gap: 12,
+
+    width: '100%',
+
+  },
+
+  navbarTimerBox: {
+
+    flex: 1,
+
+    maxWidth: 150,
+
+  },
+
+  timerCompact: {
+
+    backgroundColor: 'rgba(31, 160, 155, 0.1)',
+
+    paddingVertical: 10,
+
+    borderRadius: 50,
+
+    borderWidth: 1,
+
+    borderColor: COLORS.primary,
+
+    alignItems: 'center',
+
+    justifyContent: 'center',
+
+  },
+
+  timerTextCompact: {
+
+    fontFamily: 'Rubik_700Bold',
+
+    fontSize: 16,
+
+    color: COLORS.primary,
+
+    letterSpacing: 1,
+
+  },
+
+  timerContainer: {
+
+    backgroundColor: 'rgba(0, 0, 0, 0.15)',
+
+    paddingHorizontal: 20,
+
+    paddingVertical: 8,
+
+    borderRadius: 16,
+
+    borderWidth: 2,
+
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+
+    marginTop: 8,
+
+  },
+
+  timerText: {
+
+    fontFamily: 'Rubik_700Bold',
+
+    fontSize: 22,
+
+    color: '#fff',
+
+    letterSpacing: 2,
+
+    textAlign: 'center',
+
+  },
+
+
+
+  // --- PreOrder Form Timer ---
+
+  preOrderPromoBox: {
+
+    alignItems: 'center',
+
+    marginBottom: 16,
+
+  },
+
+  preOrderTimerWrapper: {
+
+    alignItems: 'center',
+
+    marginTop: 12,
+
+  },
+
+  preOrderTimerLabel: {
+
+    fontFamily: 'Rubik_600SemiBold',
+
+    fontSize: 14,
+
+    color: 'rgba(255, 255, 255, 0.9)',
+
+    marginBottom: 6,
+
+    textAlign: 'center',
 
   },
 
