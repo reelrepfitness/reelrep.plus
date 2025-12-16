@@ -7,26 +7,26 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef, useState } from 'react';
 
 import {
-  Alert,
-  Animated,
+    Alert,
+    Animated,
 
-  Image,
-  KeyboardAvoidingView,
+    Image,
+    KeyboardAvoidingView,
 
-  Platform,
-  ScrollView as RNScrollView,
+    Platform,
+    ScrollView as RNScrollView,
 
-  StyleSheet,
+    StyleSheet,
 
-  Text,
+    Text,
 
-  TextInput,
+    TextInput,
 
-  TouchableOpacity,
+    TouchableOpacity,
 
-  useWindowDimensions,
+    useWindowDimensions,
 
-  View
+    View
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -291,6 +291,170 @@ const HeroSection = ({ width, onScrollToForm }: { width: number, onScrollToForm:
 
 
 
+// --- "Doing It Right" Section (Calm.com inspired) ---
+
+const DoingItRightSection = ({ width }: { width: number }) => {
+
+    const isDesktop = width >= 768;
+
+
+
+    const principles = [
+
+        {
+
+            icon: require('../assets/images/scale-icon.png'),
+
+            title: 'לא שוקלים אוכל',
+
+            titleUnderline: 'לא', // Word to underline
+
+            description: 'כל השקילות והחישובים נעשו מראש, כדי שלכם יהיה קל יותר.'
+
+        },
+
+        {
+
+            icon: require('../assets/images/knowledge-icon.png'),
+
+            title: ' זה לא מידע, זה ידע. ',
+
+            description: 'אפלקציה שנבנתה ע״י דיאטנים קליניים ובוגרי תואר ראשון בתזונה.'
+
+        },
+
+        {
+
+            icon: require('../assets/images/timeless-icon.png'),
+
+            title: 'זה לא דיאטה',
+
+            description: 'דיאטה זה זמני. כאן נהפוך לך את זה לאורח חיים.'
+
+        }
+
+    ];
+
+
+
+    return (
+
+        <View style={styles.doingItRightContainer}>
+
+            <FadeInView delay={0}>
+
+                <Text style={styles.doingItRightTitle}>הפעם, עושים את זה נכון.</Text>
+
+            </FadeInView>
+
+
+
+            <View style={[
+
+                styles.principlesGrid,
+
+                isDesktop && {
+
+                    flexDirection: 'row',
+
+                    maxWidth: 1400,
+
+                    gap: 60,
+
+                    paddingHorizontal: 60,
+
+                    alignSelf: 'center'
+
+                }
+
+            ]}>
+
+                {principles.map((item, index) => (
+
+                    <React.Fragment key={index}>
+
+                        <FadeInView delay={100 + index * 100}>
+
+                            <View style={[
+
+                                styles.principleCard,
+
+                                isDesktop && {
+
+                                    flex: 1,
+
+                                    maxWidth: 400,
+
+                                    paddingHorizontal: 20
+
+                                }
+
+                            ]}>
+
+                                <View style={styles.principleIconWrapper}>
+
+                                    <Image
+
+                                        source={item.icon}
+
+                                        style={styles.principleIcon}
+
+                                        resizeMode="contain"
+
+                                    />
+
+                                </View>
+
+                                <Text style={styles.principleTitle}>
+
+                                    {item.titleUnderline ? (
+
+                                        <>
+
+                                            <Text style={{ textDecorationLine: 'underline' }}>{item.titleUnderline}</Text>
+
+                                            {item.title.replace(item.titleUnderline, '')}
+
+                                        </>
+
+                                    ) : (
+
+                                        item.title
+
+                                    )}
+
+                                </Text>
+
+                                <Text style={styles.principleDescription}>{item.description}</Text>
+
+                            </View>
+
+                        </FadeInView>
+
+
+
+                        {/* Mobile divider - only between items, not after last */}
+
+                        {!isDesktop && index < principles.length - 1 && (
+
+                            <View style={styles.mobileDivider} />
+
+                        )}
+
+                    </React.Fragment>
+
+                ))}
+
+            </View>
+
+        </View>
+
+    );
+
+};
+
+
+
 const ValuePropositionSection = ({ width }: { width: number }) => {
 
     const isMobile = width < 768;
@@ -313,25 +477,27 @@ const ValuePropositionSection = ({ width }: { width: number }) => {
 
     return (
 
-        <View style={{ marginVertical: 60, paddingHorizontal: 20 }}>
+        <View style={{ marginVertical: 60 }}>
 
-            <Text style={[styles.sectionHeader, { textAlign: 'center', marginBottom: 40 }]}>תכירו, ככה נעבוד</Text>
+            {/* "Meet them" intro */}
 
-            
+            <FadeInView delay={0}>
 
-            <View style={[glassmorphismStyle, styles.disclaimerBox]}>
+                <View style={styles.meetThemSection}>
 
-                <Text style={styles.disclaimerText}>
+                    <View style={styles.dividerLine} />
 
-                    חשוב להדגיש: אין לכם מה לשקול אוכל ולחשב. החישובים ביצענו בשבילכם מראש! תמדדו בעזרת כפות, כוסות או יחידות.
+                    <Text style={styles.meetThemText}>תכירו אותם:</Text>
 
-                </Text>
+                </View>
 
-            </View>
+            </FadeInView>
 
 
 
-            <View style={{ gap: 24, marginTop: 40 }}>
+            {/* Macro Cards */}
+
+            <View style={{ gap: 24, paddingHorizontal: 20, marginTop: 30 }}>
 
                 {macros.map((item, index) => {
 
@@ -339,11 +505,11 @@ const ValuePropositionSection = ({ width }: { width: number }) => {
 
                     return (
 
-                        <FadeInView key={index} delay={index * 100}>
+                        <FadeInView key={index} delay={300 + index * 100}>
 
                             <View style={[
 
-                                styles.macroCardContainer, 
+                                styles.macroCardContainer,
 
                                 { flexDirection: isEven ? 'row' : 'row-reverse' }
 
@@ -401,13 +567,33 @@ const FeatureCard = ({ item, index, width }: { item: any, index: number, width: 
 
     const isDesktop = width >= 768;
 
-    
+    const isEven = index % 2 === 0;
+
+
 
     return (
 
-        <View style={[styles.featureCardWrapper, isDesktop && { flexDirection: index % 2 === 0 ? 'row' : 'row-reverse', padding: 0 }]}>
+        <View style={[
 
-            
+            styles.featureCardWrapper,
+
+            isDesktop && {
+
+                flexDirection: isEven ? 'row' : 'row-reverse',
+
+                padding: 0,
+
+                alignSelf: isEven ? 'flex-start' : 'flex-end',
+
+                marginLeft: isEven ? 0 : 80,  // Push odd cards to the right
+
+                marginRight: isEven ? 80 : 0  // Push even cards to the left
+
+            }
+
+        ]}>
+
+
 
             {/* TEXT SECTION */}
 
@@ -415,13 +601,13 @@ const FeatureCard = ({ item, index, width }: { item: any, index: number, width: 
 
                 {/* ICON: Rendered directly, ABSOLUTELY NO BOX */}
 
-                <Image 
+                <Image
 
-                    source={item.icon} 
+                    source={item.icon}
 
-                    style={styles.featureIcon} 
+                    style={styles.featureIcon}
 
-                    resizeMode="contain" 
+                    resizeMode="contain"
 
                 />
 
@@ -431,15 +617,15 @@ const FeatureCard = ({ item, index, width }: { item: any, index: number, width: 
 
             </View>
 
-            
+
 
             {/* IMAGE SECTION (The Mask) */}
 
             <View style={[styles.imageMask, isDesktop ? { width: '50%', height: '100%' } : { width: '100%' }]}>
 
-                <Image 
+                <Image
 
-                    source={item.image} 
+                    source={item.image}
 
                     style={styles.featureImage}
 
@@ -774,7 +960,13 @@ export default function LandingPage() {
 
             <HeroSection width={width} onScrollToForm={scrollToForm} />
 
-            
+
+
+            {/* Doing It Right Section */}
+
+            <DoingItRightSection width={width} />
+
+
 
             <View style={styles.contentWrapper}>
 
@@ -786,7 +978,7 @@ export default function LandingPage() {
 
             <View style={{ backgroundColor: COLORS.background, paddingTop: 40, paddingBottom: 20 }}>
 
-                 <Text style={[styles.sectionHeader, { fontSize: 32, fontWeight: '800', textAlign: 'center' }]}>מה יש בפנים?</Text>
+                 <Text style={[styles.sectionHeader, { fontSize: 32, fontWeight: '800', textAlign: 'center' }]}>מה אתם מקבלים?</Text>
 
             </View>
 
@@ -982,6 +1174,118 @@ const styles = StyleSheet.create({
 
   },
 
+
+
+  // "Doing It Right" Section Styles (Calm.com inspired)
+
+  doingItRightContainer: {
+
+      backgroundColor: '#FAFBFC',
+
+      paddingVertical: 80,
+
+      paddingHorizontal: 20,
+
+      alignItems: 'center',
+
+  },
+
+  doingItRightTitle: {
+
+      fontFamily: 'Rubik_700Bold',
+
+      fontSize: 40,
+
+      color: COLORS.textDark,
+
+      textAlign: 'center',
+
+      marginBottom: 60,
+
+      letterSpacing: -0.5,
+
+  },
+
+  principlesGrid: {
+
+      width: '100%',
+
+      justifyContent: 'center',
+
+      alignItems: 'center',
+
+  },
+
+  principleCard: {
+
+      padding: 20,
+
+      alignItems: 'center',
+
+  },
+
+  mobileDivider: {
+
+      height: 3,
+
+      backgroundColor: 'rgba(31, 160, 155, 0.2)',
+
+      marginVertical: 40,
+
+      marginHorizontal: 40,
+
+      borderRadius: 2,
+
+  },
+
+  principleIconWrapper: {
+
+      marginBottom: 24,
+
+      alignItems: 'center',
+
+      justifyContent: 'center',
+
+  },
+
+  principleIcon: {
+
+      width: 80,
+
+      height: 80,
+
+  },
+
+  principleTitle: {
+
+      fontFamily: 'Rubik_700Bold',
+
+      fontSize: 22,
+
+      color: COLORS.textDark,
+
+      textAlign: 'center',
+
+      marginBottom: 12,
+
+      lineHeight: 30,
+
+  },
+
+  principleDescription: {
+
+      fontFamily: 'Rubik_400Regular',
+
+      fontSize: 16,
+
+      color: COLORS.textLight,
+
+      textAlign: 'center',
+
+      lineHeight: 26,
+
+  },
+
   disclaimerBox: {
 
       padding: 16,
@@ -1007,6 +1311,148 @@ const styles = StyleSheet.create({
       lineHeight: 22,
 
   },
+
+
+
+  // Modern Value Proposition Header Styles
+
+  valuePropositionHeader: {
+
+      marginHorizontal: 20,
+
+      marginBottom: 20,
+
+      borderRadius: 28,
+
+      overflow: 'hidden',
+
+      shadowColor: '#1FA09B',
+
+      shadowOffset: { width: 0, height: 8 },
+
+      shadowOpacity: 0.12,
+
+      shadowRadius: 24,
+
+      elevation: 8,
+
+  },
+
+  valuePropositionGradient: {
+
+      padding: 40,
+
+      paddingVertical: 50,
+
+      alignItems: 'center',
+
+  },
+
+  headerBadge: {
+
+      flexDirection: 'row-reverse',
+
+      alignItems: 'center',
+
+      gap: 8,
+
+      backgroundColor: 'rgba(31, 160, 155, 0.15)',
+
+      paddingHorizontal: 20,
+
+      paddingVertical: 10,
+
+      borderRadius: 50,
+
+      marginBottom: 24,
+
+      borderWidth: 1,
+
+      borderColor: 'rgba(31, 160, 155, 0.3)',
+
+  },
+
+  headerBadgeText: {
+
+      fontFamily: 'Rubik_700Bold',
+
+      fontSize: 16,
+
+      color: '#1FA09B',
+
+      letterSpacing: 0.5,
+
+  },
+
+  valuePropositionMainText: {
+
+      fontFamily: 'Rubik_700Bold',
+
+      fontSize: 26,
+
+      color: COLORS.textDark,
+
+      textAlign: 'center',
+
+      lineHeight: 38,
+
+      marginBottom: 16,
+
+  },
+
+  valuePropositionSubText: {
+
+      fontFamily: 'Rubik_600SemiBold',
+
+      fontSize: 18,
+
+      color: COLORS.textLight,
+
+      textAlign: 'center',
+
+      lineHeight: 28,
+
+  },
+
+  meetThemSection: {
+
+      alignItems: 'center',
+
+      marginTop: 50,
+
+      marginBottom: 10,
+
+  },
+
+  dividerLine: {
+
+      width: 60,
+
+      height: 4,
+
+      backgroundColor: '#1FA09B',
+
+      borderRadius: 2,
+
+      marginBottom: 20,
+
+  },
+
+  meetThemText: {
+
+      fontFamily: 'Rubik_700Bold',
+
+      fontSize: 22,
+
+      color: COLORS.textDark,
+
+      textAlign: 'center',
+
+      letterSpacing: 0.5,
+
+  },
+
+
 
   // Macro Cards
 
@@ -1034,9 +1480,9 @@ const styles = StyleSheet.create({
 
   macroImage: {
 
-      width: 100,
+      width: 130,
 
-      height: 100,
+      height: 130,
 
       resizeMode: 'contain',
 
@@ -1126,6 +1572,8 @@ const styles = StyleSheet.create({
 
       paddingBottom: 40,
 
+      alignItems: 'center', // Center cards on desktop
+
   },
 
   featureCardWrapper: {
@@ -1150,6 +1598,10 @@ const styles = StyleSheet.create({
 
     padding: 0,         // CRITICAL: Full bleed
 
+    maxWidth: 700,      // Smaller for dramatic zigzag effect
+
+    width: '100%',      // Full width up to max
+
   },
 
   featureTextWrapper: {
@@ -1166,7 +1618,7 @@ const styles = StyleSheet.create({
 
   },
 
-  // ICON FIXED: NO BACKGROUND BOX
+  // ICON: Rounded with glow effect, no background box
 
   featureIcon: {
 
@@ -1178,25 +1630,27 @@ const styles = StyleSheet.create({
 
       backgroundColor: 'transparent',
 
+      borderRadius: 24,
+
       shadowColor: "#1FA09B",
 
       shadowOffset: { width: 0, height: 0 },
 
-      shadowOpacity: 0.6,
+      shadowOpacity: 0.8,
 
-      shadowRadius: 20,
+      shadowRadius: 30,
 
   },
 
-  // IMAGE MASK FIXED: Top Anchor
+  // IMAGE MASK: Top Anchor - Shows top 75% of iPhone mockup, crops bottom 25%
 
   imageMask: {
 
       width: '100%',
 
-      aspectRatio: 1,      // Visible Window
+      aspectRatio: 0.55,   // Narrow, tall window (actual phone proportions)
 
-      overflow: 'hidden',  
+      overflow: 'hidden',
 
       position: 'relative',
 
@@ -1206,15 +1660,15 @@ const styles = StyleSheet.create({
 
       width: '100%',
 
-      height: '125%',      // Taller than mask
+      height: '110%',      // Slightly extends to crop bottom 25% only
 
       position: 'absolute',
 
-      top: 0,              // Anchored Top
+      top: 0,              // Anchored Top - shows full top, hides bottom
 
       left: 0,
 
-      resizeMode: 'cover',
+      resizeMode: 'contain',  // Changed to 'contain' to show full phone
 
   },
 
