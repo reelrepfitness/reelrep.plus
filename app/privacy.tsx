@@ -1,9 +1,9 @@
 import { Rubik_400Regular, Rubik_600SemiBold, Rubik_700Bold, useFonts } from '@expo-google-fonts/rubik';
+import { Feather } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Platform } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
 
 const COLORS = {
   background: '#F9FAFB',
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     paddingTop: 24,
   },
   lastUpdated: {
-    fontFamily: 'Rubik_600SemiBold',
+    fontFamily: 'Rubik_400Regular',
     fontSize: 14,
     color: COLORS.primary,
     marginBottom: 24,
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     borderRadius: 1,
   },
   agreement: {
-    fontFamily: 'Rubik_600SemiBold',
+    fontFamily: 'Rubik_400Regular',
     fontSize: 16,
     color: COLORS.textDark,
     textAlign: 'center',

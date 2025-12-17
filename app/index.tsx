@@ -12,7 +12,8 @@ import {
 
     Image,
     KeyboardAvoidingView,
-
+    Linking,
+    Modal,
     Platform,
     ScrollView as RNScrollView,
 
@@ -29,9 +30,9 @@ import {
     View
 } from 'react-native';
 
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Stack, Link } from 'expo-router';
+import { Link, Stack } from 'expo-router';
 
 
 
@@ -39,19 +40,19 @@ import { Stack, Link } from 'expo-router';
 
 const COLORS = {
 
-  background: '#F9FAFB',
+    background: '#F9FAFB',
 
-  primary: '#1FA09B',
+    primary: '#1FA09B',
 
-  textDark: '#1c1c1c',
+    textDark: '#1c1c1c',
 
-  textLight: '#555555',
+    textLight: '#555555',
 
-  glassBorder: 'rgba(255, 255, 255, 0.5)',
+    glassBorder: 'rgba(255, 255, 255, 0.5)',
 
-  white: '#ffffff',
+    white: '#ffffff',
 
-  inputBg: '#F0F2F5',
+    inputBg: '#F0F2F5',
 
 };
 
@@ -65,47 +66,47 @@ const AnimatedScrollView = Animated.createAnimatedComponent(RNScrollView);
 
 const FadeInView = ({ children, delay = 0 }: { children: React.ReactNode, delay?: number }) => {
 
-  const animValue = useRef(new Animated.Value(0)).current;
+    const animValue = useRef(new Animated.Value(0)).current;
 
 
 
-  useEffect(() => {
+    useEffect(() => {
 
-    Animated.timing(animValue, {
+        Animated.timing(animValue, {
 
-      toValue: 1,
+            toValue: 1,
 
-      duration: 800,
+            duration: 800,
 
-      delay,
+            delay,
 
-      useNativeDriver: true,
+            useNativeDriver: true,
 
-    }).start();
+        }).start();
 
-  }, [animValue, delay]);
-
-
-
-  const translateY = animValue.interpolate({
-
-    inputRange: [0, 1],
-
-    outputRange: [50, 0],
-
-  });
+    }, [animValue, delay]);
 
 
 
-  return (
+    const translateY = animValue.interpolate({
 
-    <Animated.View style={{ opacity: animValue, transform: [{ translateY }] }}>
+        inputRange: [0, 1],
 
-      {children}
+        outputRange: [50, 0],
 
-    </Animated.View>
+    });
 
-  );
+
+
+    return (
+
+        <Animated.View style={{ opacity: animValue, transform: [{ translateY }] }}>
+
+            {children}
+
+        </Animated.View>
+
+    );
 
 };
 
@@ -115,45 +116,41 @@ const FadeInView = ({ children, delay = 0 }: { children: React.ReactNode, delay?
 
 
 
-// Countdown Timer Component
+// Spots Counter Component (Replaces Fake Countdown)
 
-const CountdownTimer = ({ compact = false }: { compact?: boolean }) => {
+const SpotsCounter = ({ spotsLeft, totalSpots = 100 }: { spotsLeft: number, totalSpots?: number }) => {
 
-    // Initialize with 4 hours 34 min 11 sec (16451 seconds)
+    const spotsFilled = totalSpots - spotsLeft;
 
-    const [timeLeft, setTimeLeft] = useState(16451);
-
-
-
-    useEffect(() => {
-
-        const timer = setInterval(() => {
-
-            setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
-
-        }, 1000);
-
-        return () => clearInterval(timer);
-
-    }, []);
-
-
-
-    const hours = Math.floor(timeLeft / 3600);
-
-    const minutes = Math.floor((timeLeft % 3600) / 60);
-
-    const seconds = timeLeft % 60;
+    const progress = spotsFilled / totalSpots;
 
 
 
     return (
 
-        <View style={compact ? styles.timerCompact : styles.timerContainer}>
+        <View style={styles.spotsCounterContainer}>
 
-            <Text style={compact ? styles.timerTextCompact : styles.timerText}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
 
-                {String(hours).padStart(2, '0')}:{String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+                <Feather name="target" size={18} color="#fff" />
+
+                <Text style={styles.spotsCounterText}>
+
+                    נותרו {spotsLeft} מקומות בגל הראשון
+
+                </Text>
+
+            </View>
+
+            <View style={styles.progressBarContainer}>
+
+                <View style={[styles.progressBarFill, { width: `${progress * 100}%` }]} />
+
+            </View>
+
+            <Text style={styles.spotsSubtext}>
+
+                {spotsFilled} מתוך {totalSpots} הצטרפו כבר
 
             </Text>
 
@@ -165,13 +162,13 @@ const CountdownTimer = ({ compact = false }: { compact?: boolean }) => {
 
 
 
-const Navbar = ({ onScrollToForm }: { onScrollToForm: () => void }) => (
+const Navbar = ({ onScrollToForm, spotsLeft }: { onScrollToForm: () => void, spotsLeft: number }) => (
 
     <View style={styles.fixedHeader}>
 
         <Image
 
-            source={require('../assets/images/logo-reelrepplus-black.png')}
+            source={require('../assets/images/logo-reelrep-plus-black.png')}
 
             style={styles.navbarLogo}
 
@@ -179,23 +176,13 @@ const Navbar = ({ onScrollToForm }: { onScrollToForm: () => void }) => (
 
         />
 
-        <Text style={styles.navbarPromoText}>חודש ראשון מתנה לנרשמים עכשיו</Text>
+        {/* Tagline */}
 
-        <View style={styles.navbarButtonRow}>
+        <Text style={styles.navbarTagline}>
 
-            <TouchableOpacity style={styles.navButton} onPress={onScrollToForm}>
+            אפליקציית מעקב התזונה האחרונה שלך
 
-                <Text style={styles.navButtonText}>הרשמה מוקדמת</Text>
-
-            </TouchableOpacity>
-
-            <View style={styles.navbarTimerBox}>
-
-                <CountdownTimer compact />
-
-            </View>
-
-        </View>
+        </Text>
 
     </View>
 
@@ -207,25 +194,41 @@ const HeroSection = ({ width, onScrollToForm }: { width: number, onScrollToForm:
 
     const isMobile = width < 768;
 
-    const floatAnim = useRef(new Animated.Value(0)).current;
+    const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
-    
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+
+
 
     useEffect(() => {
 
-        Animated.loop(
+        // Entrance animation for image (no floating)
 
-            Animated.sequence([
+        Animated.parallel([
 
-                Animated.timing(floatAnim, { toValue: -20, duration: 3500, useNativeDriver: true }),
+            Animated.timing(scaleAnim, {
 
-                Animated.timing(floatAnim, { toValue: 0, duration: 3500, useNativeDriver: true }),
+                toValue: 1,
 
-            ])
+                duration: 1000,
 
-        ).start();
+                useNativeDriver: true
 
-    }, [floatAnim]);
+            }),
+
+            Animated.timing(fadeAnim, {
+
+                toValue: 1,
+
+                duration: 800,
+
+                useNativeDriver: true
+
+            }),
+
+        ]).start();
+
+    }, [scaleAnim, fadeAnim]);
 
 
 
@@ -233,93 +236,131 @@ const HeroSection = ({ width, onScrollToForm }: { width: number, onScrollToForm:
 
         <View style={styles.darkHeroContainer}>
 
-            <LinearGradient
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: '#1FA09B' }]} />
 
-                colors={['#1c1c1c', '#152b2b', '#1c1c1c']}
 
-                start={{ x: 0, y: 0 }}
 
-                end={{ x: 1, y: 1 }}
+            <View style={[styles.heroContentCentered, !isMobile && {
+                alignItems: 'flex-start',
+                paddingLeft: 80,
+                maxWidth: 700,
+                paddingTop: 80,
+                paddingBottom: 80
+            }]}>
 
-                style={StyleSheet.absoluteFill}
+                {isMobile ? (
+                    <>
+                        {/* MOBILE: Button First */}
+                        <FadeInView delay={300}>
+                            <TouchableOpacity
+                                style={[styles.ctaButtonLarge, {
+                                    marginBottom: 20,
+                                    backgroundColor: '#FFFFFF',
+                                    borderColor: '#fff',
+                                    borderWidth: 0,
+                                    paddingVertical: 18,
+                                    paddingHorizontal: 40,
+                                    shadowColor: '#000',
+                                    shadowOffset: { width: 0, height: 4 },
+                                    shadowOpacity: 0.15,
+                                    shadowRadius: 12,
+                                    elevation: 8
+                                }]}
+                                onPress={onScrollToForm}
+                            >
+                                <Text style={[styles.ctaButtonTextLarge, { color: '#1FA09B', fontSize: 18 }]}>שריינו לי מקום בגל הראשון</Text>
+                            </TouchableOpacity>
+                        </FadeInView>
 
-            />
+                        {/* Title Text */}
+                        <FadeInView delay={600}>
+                            <Text style={[styles.heroMainTitle, { fontSize: 38, lineHeight: 46 }]}>
+                                זה לא עוד ״דיאטה״
+                            </Text>
+                        </FadeInView>
 
-            <View style={styles.centeredContent}>
+                        {/* Subtitle Text */}
+                        <FadeInView delay={900}>
+                            <Text style={[styles.heroTagline, { fontSize: 30, lineHeight: 28, marginTop: 12 }]}>
+                                כי השליטה היא <Text style={{ color: '#000000' }}>בידיים שלך</Text>.
+                            </Text>
+                        </FadeInView>
+                    </>
+                ) : (
+                    <>
+                        {/* DESKTOP: Text First, Button Below */}
+                        {/* Title Text */}
+                        <FadeInView delay={300}>
+                            <Text style={[styles.heroMainTitle, { fontSize: 60, lineHeight: 70, letterSpacing: -1.5 }]}>
+                                זו לא עוד ״דיאטה״
+                            </Text>
+                        </FadeInView>
 
-                <FadeInView delay={200}>
+                        {/* Subtitle Text */}
+                        <FadeInView delay={600}>
+                            <Text style={[styles.heroTagline, { fontSize: 32, lineHeight: 42, marginTop: 16 }]}>
+                                כי השליטה היא <Text style={{ color: '#000000' }}>בידיים שלך</Text>.
+                            </Text>
+                        </FadeInView>
 
-                    <View style={{ alignItems: 'center', paddingHorizontal: 20, width: '100%' }}>
-
-                        <Image
-
-                            source={require('../assets/images/logo-reelrepplus-white.png')}
-
-                            style={{
-
-                                width: isMobile ? 260 : 450,
-
-                                height: isMobile ? 65 : 112.5,
-
-                                resizeMode: 'contain',
-
-                                marginBottom: 20,
-
-                            }}
-
-                        />
-
-                        <Text style={[styles.heroSubtitle, { color: '#e0e0e0', textAlign: 'center', marginTop: 10 }]}>
-
-                            {"אפליקציית תזונה חכמה למי שרוצה שליטה\nבלי להתעסק עם גרמים."}
-
-                        </Text>
-
-                        <TouchableOpacity 
-
-                            style={[styles.ctaButtonLarge, { marginTop: 30, backgroundColor: '#1FA09B', borderColor: '#fff', borderWidth: 0 }]}
-
-                            onPress={onScrollToForm}
-
-                        >
-
-                            <Text style={styles.ctaButtonTextLarge}>הרשמה מוקדמת</Text>
-
-                        </TouchableOpacity>
-
-                    </View>
-
-                </FadeInView>
-
-                <View style={{ marginTop: 40, alignItems: 'center', justifyContent: 'center' }}>
-
-                    <FadeInView delay={400}>
-
-                        <Animated.View style={{ transform: [{ translateY: floatAnim }] }}>
-
-                            <Image 
-
-                                source={require('../assets/images/hero.png')} 
-
-                                style={{
-
-                                    width: isMobile ? width * 0.85 : 380, 
-
-                                    height: isMobile ? width * 0.85 * 1.3 : 750, 
-
-                                    resizeMode: 'contain'
-
-                                }}
-
-                            />
-
-                        </Animated.View>
-
-                    </FadeInView>
-
-                </View>
+                        {/* Button Below Text */}
+                        <FadeInView delay={900}>
+                            <TouchableOpacity
+                                style={[styles.ctaButtonLarge, {
+                                    marginTop: 50,
+                                    backgroundColor: '#FFFFFF',
+                                    borderColor: '#fff',
+                                    borderWidth: 0,
+                                    paddingVertical: 20,
+                                    paddingHorizontal: 50
+                                }]}
+                                onPress={onScrollToForm}
+                            >
+                                <Text style={[styles.ctaButtonTextLarge, { color: '#1FA09B', fontSize: 20 }]}>שריינו לי מקום בגל הראשון</Text>
+                            </TouchableOpacity>
+                        </FadeInView>
+                    </>
+                )}
 
             </View>
+
+
+
+            {/* Hand Image - From Bottom Right */}
+
+            <Animated.View style={{
+
+                transform: [{ scale: scaleAnim }],
+
+                opacity: fadeAnim,
+
+                position: 'absolute',
+
+                bottom: isMobile ? -50 : -100,
+
+                right: isMobile ? -30 : -50,
+
+                zIndex: 5
+
+            }}>
+
+                <Image
+
+                    source={require('../assets/images/icon-hand.png')}
+
+                    style={{
+
+                        width: isMobile ? 350 : 600,
+
+                        height: isMobile ? 350 : 600,
+
+                        resizeMode: 'contain'
+
+                    }}
+
+                />
+
+            </Animated.View>
 
         </View>
 
@@ -450,7 +491,11 @@ const DoingItRightSection = ({ width }: { width: number }) => {
                                     )}
                                 </Text>
 
-                                <Text style={styles.principleDescription}>{item.description}</Text>
+                                <View style={{ minHeight: 60, overflow: 'visible', width: '100%' }}>
+                                    {item.description.split('\n').map((line, i) => (
+                                        <Text key={i} style={styles.principleDescription}>{line}</Text>
+                                    ))}
+                                </View>
 
                             </View>
 
@@ -600,23 +645,53 @@ const ValuePropositionSection = ({ width }: { width: number }) => {
 
 // --- Testimonials Section ---
 
+// --- Pricing Section ---
+const PricingSection = () => {
+    return (
+        <View style={styles.pricingSection}>
+            <View style={styles.pricingCard}>
+                <View style={styles.freeTrialBadge}>
+                    <Text style={styles.freeTrialText}>חודש ראשון חינם</Text>
+                </View>
+
+                <View style={styles.pricingContent}>
+                    <View style={styles.pricingLeft}>
+                        <Text style={styles.pricingLabel}>מנוי שנתי</Text>
+                        <Text style={styles.pricingYearly}>180₪/שנה</Text>
+                    </View>
+                    <View style={styles.pricingRight}>
+                        <Text style={styles.pricingMonthly}>15₪/חודש</Text>
+                    </View>
+                </View>
+            </View>
+
+            <Text style={styles.pricingDisclaimer}>
+                לאחר החודש החינם, המנוי השנתי עולה 180₪ ומתחדש אוטומטית כל שנה עד לביטול.
+            </Text>
+        </View>
+    );
+};
+
 const TestimonialsSection = ({ width }: { width: number }) => {
     const isDesktop = width >= 768;
 
     const testimonials = [
         {
-            text: 'סוף סוף אפליקציה שמבינה אותי. לא צריך לשקול כל דבר, הכל כבר מחושב.',
-            author: 'שירה מתל אביב',
+            text: 'ירדתי 3.5 ק״ג בשבועיים הראשונים בלי לשקול אוכל אפילו פעם אחת. המערכת של המנות פשוט עובדת!',
+            name: 'הילה מ.',
+            role: 'בוחנת בטא',
             rating: 5
         },
         {
-            text: 'התחלתי להשתמש באפליקציה לפני חודשיים והיא שינתה לי את החיים. עכשיו אני יודעת בדיוק מה אני אוכלת.',
-            author: 'דני מירושלים',
+            text: 'כדיאטנית, הייתי סקפטית. אבל הדיוק של המנות מרשים, והלקוחות שלי סוף סוף עומדים בתוכנית.',
+            name: 'אורית ל.',
+            role: 'דיאטנית קלינית',
             rating: 5
         },
         {
-            text: 'המדריכים והמתכונים עוזרים לי לשמור על המסלול. זה לא עוד דיאטה, זה באמת אורח חיים.',
-            author: 'מיכל מחיפה',
+            text: 'ה-AI שמזהה אוכל מתמונה חוסך לי 10 דקות בכל ארוחה. גם עם 3 ילדים אני מצליחה לעקוב.',
+            name: 'מיכל ש.',
+            role: 'אמא ל-3',
             rating: 5
         }
     ];
@@ -625,7 +700,7 @@ const TestimonialsSection = ({ width }: { width: number }) => {
         <View style={{ paddingVertical: 60, backgroundColor: COLORS.background }}>
             <FadeInView delay={0}>
                 <Text style={[styles.sectionHeader, { fontSize: 32, fontWeight: '800', textAlign: 'center', marginBottom: 40 }]}>
-                    מה המשתמשים שלנו אומרים?
+                    מה הבוחנים שלנו אומרים?
                 </Text>
             </FadeInView>
 
@@ -654,7 +729,8 @@ const TestimonialsSection = ({ width }: { width: number }) => {
 
                             {/* Bottom Section - Author and Stars */}
                             <View>
-                                <Text style={styles.testimonialAuthor}>{testimonial.author}</Text>
+                                <Text style={styles.testimonialAuthor}>{testimonial.name}</Text>
+                                <Text style={styles.testimonialRole}>{testimonial.role}</Text>
 
                                 {/* Star Rating */}
                                 <View style={styles.starsContainer}>
@@ -709,7 +785,12 @@ const FeatureCard = ({ item, index, width }: { item: any, index: number, width: 
 
             {/* TEXT SECTION */}
 
-            <View style={[styles.featureTextWrapper, isDesktop ? { width: '45%', padding: 40 } : { width: '100%' }]}>
+            <View style={[
+                styles.featureTextWrapper,
+                isDesktop ? { width: '45%', padding: 40 } : { width: '100%' },
+                // For non-food_bank cards: add spacing under subtitle
+                item.title !== "בנק מזון עשיר ועצום" && { paddingBottom: 20 }
+            ]}>
 
                 {/* ICON: Rendered directly, ABSOLUTELY NO BOX */}
 
@@ -733,13 +814,26 @@ const FeatureCard = ({ item, index, width }: { item: any, index: number, width: 
 
             {/* IMAGE SECTION (The Mask) */}
 
-            <View style={[styles.imageMask, isDesktop ? { width: '50%', height: '100%' } : { width: '100%' }]}>
+            <View style={[
+                styles.imageMask,
+                isDesktop ? { width: '50%', height: '100%' } : { width: '80%', alignSelf: 'center' },
+                // For non-food_bank cards: set height to show full image without cropping
+                item.title !== "בנק מזון עשיר ועצום" && !isDesktop && { height: 400, aspectRatio: undefined, marginBottom: -1 }
+            ]}>
 
                 <Image
 
                     source={item.image}
 
-                    style={styles.featureImage}
+                    style={[
+                        styles.featureImage,
+                        // For non-food_bank cards: fill container height from bottom
+                        item.title !== "בנק מזון עשיר ועצום" && {
+                            bottom: 0,
+                            top: 'auto',
+                            height: '100%'
+                        }
+                    ]}
 
                 />
 
@@ -753,9 +847,9 @@ const FeatureCard = ({ item, index, width }: { item: any, index: number, width: 
 
 
 
-// --- PreOrder Form (Telegram Connected) ---
+// --- PreOrder Form (Early Access Waitlist) ---
 
-const PreOrderForm = () => {
+const PreOrderForm = ({ spotsLeft }: { spotsLeft: number }) => {
 
     const [name, setName] = useState('');
 
@@ -767,9 +861,9 @@ const PreOrderForm = () => {
 
 
 
-    // Replace with your GOOGLE SCRIPT URL that sends to Telegram
+    // Your Google Apps Script Web App URL
 
-    const GOOGLE_SCRIPT_URL = "[https://script.google.com/macros/s/AKfycbxuyB9w7ziZYlfaB5geXUe9LhfeeLmnJhuH4odnazEV_SgBiJ7kKGOQWLVxhoQRJzs/exec](https://script.google.com/macros/s/AKfycbxuyB9w7ziZYlfaB5geXUe9LhfeeLmnJhuH4odnazEV_SgBiJ7kKGOQWLVxhoQRJzs/exec)"; 
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuyB9w7ziZYlfaB5geXUe9LhfeeLmnJhuH4odnazEV_SgBiJ7kKGOQWLVxhoQRJzs/exec";
 
 
 
@@ -809,7 +903,7 @@ const PreOrderForm = () => {
 
             if (result.result === "success") {
 
-                Alert.alert("איזה כיף! 🎉", "הפרטים נשמרו בהצלחה. שלחנו לך הפתעה למייל.");
+                Alert.alert("ברוכים הבאים! 🎉", "שמרנו לכם מקום בגל הראשון!\n\nבדקו את המייל לפרטים נוספים.");
 
                 setName('');
 
@@ -841,47 +935,69 @@ const PreOrderForm = () => {
 
     return (
 
-        <View style={styles.preOrderContainer}>
+        <View style={styles.preOrderWrapper}>
+
+            {/* Promo Card */}
 
             <LinearGradient
 
                 colors={['#1FA09B', '#15807B']}
 
-                style={styles.preOrderGradient}
+                style={styles.promoCard}
 
             >
 
-                <Text style={styles.preOrderTitle}>הצטרפו למהפכה!</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
 
-                <View style={styles.preOrderPromoBox}>
+                    <Feather name="award" size={18} color="#fff" />
 
-                    <Text style={styles.preOrderSubtitle}>
+                    <Text style={styles.preOrderHighlightText}>
 
-                        מי שנרשם להזמנה מוקדמת - מקבל חודש ראשון מתנה 🎁
+                        מחיר מיוחד ל-100 הראשונים
 
                     </Text>
 
-                    <View style={styles.preOrderTimerWrapper}>
+                </View>
 
-                        <Text style={styles.preOrderTimerLabel}>הצעה מסתיימת בעוד:</Text>
+                <Text style={styles.preOrderHighlightTextBold}>
 
-                        <CountdownTimer />
+                    ₪12/חודש <Text style={styles.freeTextHighlight}>לכל החיים</Text>
 
-                    </View>
+                </Text>
+
+                <Text style={styles.preOrderSubtext}>
+
+                    במקום ₪15 + חודש ראשון חינם
+
+                </Text>
+
+                <View style={styles.promoTimerWrapper}>
+
+                    <SpotsCounter spotsLeft={spotsLeft} />
 
                 </View>
 
-                <Text style={styles.preOrderLabel}>השאירו פרטים ונדאג לעדכן אתכם כשהאפליקציה באוויר</Text>
+            </LinearGradient>
+
+
+
+            {/* Form Card */}
+
+            <View style={styles.formCard}>
+
+                <Text style={styles.preOrderTitle}>הצטרפו לגל הראשון!</Text>
+
+                <Text style={styles.preOrderLabel}>השאירו פרטים ונשלח לכם קישור להורדה בינואר 2025</Text>
 
 
 
                 <View style={styles.formInputs}>
 
-                    <TextInput 
+                    <TextInput
 
-                        style={styles.input} 
+                        style={styles.input}
 
-                        placeholder="שם מלא" 
+                        placeholder="שם מלא"
 
                         placeholderTextColor="#888"
 
@@ -895,11 +1011,11 @@ const PreOrderForm = () => {
 
                     />
 
-                    <TextInput 
+                    <TextInput
 
-                        style={styles.input} 
+                        style={styles.input}
 
-                        placeholder="טלפון נייד" 
+                        placeholder="טלפון נייד"
 
                         placeholderTextColor="#888"
 
@@ -915,11 +1031,11 @@ const PreOrderForm = () => {
 
                     />
 
-                    <TextInput 
+                    <TextInput
 
-                        style={styles.input} 
+                        style={styles.input}
 
-                        placeholder="אימייל" 
+                        placeholder="אימייל"
 
                         placeholderTextColor="#888"
 
@@ -935,11 +1051,11 @@ const PreOrderForm = () => {
 
                     />
 
-                    
 
-                    <TouchableOpacity 
 
-                        style={[styles.submitButton, { opacity: loading ? 0.7 : 1 }]} 
+                    <TouchableOpacity
+
+                        style={[styles.submitButton, { opacity: loading ? 0.7 : 1 }]}
 
                         onPress={handleSubmit}
 
@@ -953,7 +1069,7 @@ const PreOrderForm = () => {
 
                 </View>
 
-            </LinearGradient>
+            </View>
 
         </View>
 
@@ -963,31 +1079,75 @@ const PreOrderForm = () => {
 
 
 
-const Footer = () => (
 
-    <View style={styles.footer}>
+const Footer = () => {
+    const [showContactPopup, setShowContactPopup] = useState(false);
 
-        <Text style={styles.footerText}>© Reel Rep Plus 2025</Text>
+    const handleEmailPress = () => {
+        Linking.openURL('mailto:ivan@reelrep.com');
+    };
 
-        <View style={styles.footerLinks}>
+    return (
+        <>
+            <View style={styles.footer}>
+                <Text style={styles.footerText}>© Reel Rep Plus 2025</Text>
 
-            <Text style={styles.footerLink}>צור קשר</Text>
+                <View style={styles.footerLinks}>
+                    <TouchableOpacity onPress={() => setShowContactPopup(true)}>
+                        <Text style={styles.footerLink}>צור קשר</Text>
+                    </TouchableOpacity>
 
-            <Link href="/privacy" asChild>
+                    <Link href="/privacy" asChild>
+                        <TouchableOpacity>
+                            <Text style={styles.footerLink}>פרטיות</Text>
+                        </TouchableOpacity>
+                    </Link>
+                </View>
+            </View>
 
-                <TouchableOpacity>
+            {/* Contact Popup Modal */}
+            <Modal
+                visible={showContactPopup}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowContactPopup(false)}
+            >
+                <TouchableOpacity
+                    style={styles.modalOverlay}
+                    activeOpacity={1}
+                    onPress={() => setShowContactPopup(false)}
+                >
+                    <View style={styles.contactPopup}>
+                        <Text style={styles.contactPopupTitle}>צור קשר</Text>
 
-                    <Text style={styles.footerLink}>פרטיות</Text>
+                        <TouchableOpacity
+                            style={styles.emailContainer}
+                            onPress={handleEmailPress}
+                        >
+                            <Feather name="mail" size={24} color="#1FA09B" />
+                            <Text style={styles.emailText}>ivan@reelrep.com</Text>
+                        </TouchableOpacity>
 
+                        <TouchableOpacity
+                            style={styles.emailContainer}
+                            onPress={() => Linking.openURL('https://www.instagram.com/reelrep.plus?igsh=bzl6NmNrOW1hc3B4&utm_source=qr')}
+                        >
+                            <Feather name="instagram" size={24} color="#1FA09B" />
+                            <Text style={styles.emailText}>@reelrep.plus</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.closeButton}
+                            onPress={() => setShowContactPopup(false)}
+                        >
+                            <Text style={styles.closeButtonText}>סגור</Text>
+                        </TouchableOpacity>
+                    </View>
                 </TouchableOpacity>
-
-            </Link>
-
-        </View>
-
-    </View>
-
-);
+            </Modal>
+        </>
+    );
+};
 
 
 
@@ -997,156 +1157,209 @@ const Footer = () => (
 
 export default function LandingPage() {
 
-  const { width } = useWindowDimensions();
+    const { width } = useWindowDimensions();
 
-  const scrollY = useRef(new Animated.Value(0)).current;
+    const scrollY = useRef(new Animated.Value(0)).current;
 
-  const scrollViewRef = useRef<RNScrollView>(null);
+    const scrollViewRef = useRef<RNScrollView>(null);
 
-  const [fontsLoaded] = useFonts({ Rubik_400Regular, Rubik_600SemiBold, Rubik_700Bold });
+    const [fontsLoaded] = useFonts({ Rubik_400Regular, Rubik_600SemiBold, Rubik_700Bold });
 
+    const insets = useSafeAreaInsets();
 
 
-  const scrollToForm = () => {
 
-    if (scrollViewRef.current) {
+    // Spots available for early access (update manually as people sign up)
 
-      scrollViewRef.current.scrollToEnd({ animated: true });
+    const [spotsLeft] = useState(79); // 21 already filled out of 100
 
-    }
 
-  };
 
+    const scrollToForm = () => {
 
+        if (scrollViewRef.current) {
 
- const features = [
-     { 
-       title: "ממשק ברור וקל להבנה", 
-       desc: "צריכה קלורית יומית, מעקב מים וצעדים במסך אחד נקי.", 
-       // התיקון: ../ במקום .. וגם הוספת screenshots
-       image: require('../assets/images/screenshots/dashboard.png'),
-       icon: require('../assets/images/dashbaord-icon.png')
-     },
-     { 
-       title: "סרקו מוצרים עם ברקוד", 
-       desc: "בלי לחפש ובלי להסתבך. סריקה מהירה והמוצר ביומן.", 
-       image: require('../assets/images/screenshots/barcode.png'),
-       icon: require('../assets/images/barcode-icon.png')
-     },
-     { 
-       title: "ניתוח צלחת עם בינה מלאכותית", 
-       desc: "צלמו את האוכל, וה-AI שלנו יפרק אותו למרכיבים וערכים.", 
-       image: require('../assets/images/screenshots/ai_scan.png'), 
-       icon: require('../assets/images/ai-scan-icon.png')
-     },
-     { 
-       title: "בנק מזון עשיר ועצום", 
-       desc: "אלפי מוצרים מהסופר, מסעדות ומאכלים ביתיים.", 
-       image: require('../assets/images/screenshots/food_bank.png'),
-       icon: require('../assets/images/food-bank-icon.png')
-     },
-     { 
-       title: "מתכונים חדשים כל שבוע", 
-       desc: "רעיונות לארוחות בריאות וטעימות שמתאימות ליעדים שלכם.", 
-       image: require('../assets/images/screenshots/recipes.png'),
-       icon: require('../assets/images/recepies-icon.png')
-     },
-     { 
-       title: "מדריכים לתהליך ללא ספקות", 
-       desc: "כל הידע שצריך כדי להצליח, כתוב בצורה פשוטה ופרקטית.", 
-       image: require('../assets/images/screenshots/guides.png'),
-       icon: require('../assets/images/guides-icon.png')
-     },
-  ];
+            // Smooth scroll to bottom with slower animation (2000ms duration)
 
+            // This allows users to see the content as they scroll
 
-  if (!fontsLoaded) return <View />;
+            scrollViewRef.current.scrollTo({
 
+                y: 10000, // Large value to ensure we reach the bottom
 
+                animated: true
 
-  return (
+            });
 
-    <SafeAreaView style={styles.container}>
+        }
 
-      <Stack.Screen options={{ headerShown: false }} />
+    };
 
 
 
-      <Navbar onScrollToForm={scrollToForm} />
+    const features = [
+        {
+            title: "ממשק ברור וקל להבנה",
+            desc: "צריכה קלורית יומית, מעקב מים וצעדים במסך אחד נקי.",
+            // התיקון: ../ במקום .. וגם הוספת screenshots
+            image: require('../assets/images/screenshots/dashboard.png'),
+            icon: require('../assets/images/dashbaord-icon.png')
+        },
+        {
+            title: "סרקו מוצרים עם ברקוד",
+            desc: "בלי לחפש ובלי להסתבך. סריקה מהירה והמוצר ביומן.",
+            image: require('../assets/images/screenshots/barcode.png'),
+            icon: require('../assets/images/barcode-icon.png')
+        },
+        {
+            title: "ניתוח צלחת עם בינה מלאכותית",
+            desc: "צלמו את האוכל, וה-AI שלנו יפרק אותו למרכיבים וערכים.",
+            image: require('../assets/images/screenshots/ai_scan.png'),
+            icon: require('../assets/images/ai-scan-icon.png')
+        },
+        {
+            title: "בנק מזון עשיר ועצום",
+            desc: "אלפי מוצרים מהסופר, מסעדות ומאכלים ביתיים.",
+            image: require('../assets/images/screenshots/food_bank.png'),
+            icon: require('../assets/images/food-bank-icon.png')
+        },
+        {
+            title: "מתכונים חדשים כל שבוע",
+            desc: "רעיונות לארוחות בריאות וטעימות שמתאימות ליעדים שלכם.",
+            image: require('../assets/images/screenshots/recipes.png'),
+            icon: require('../assets/images/recepies-icon.png')
+        },
+        {
+            title: "מדריכים לתהליך ללא ספקות",
+            desc: "כל הידע שצריך כדי להצליח, כתוב בצורה פשוטה ופרקטית.",
+            image: require('../assets/images/screenshots/guides.png'),
+            icon: require('../assets/images/guides-icon.png')
+        },
+    ];
 
 
+    if (!fontsLoaded) return <View />;
 
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
 
-          <AnimatedScrollView
 
-            ref={scrollViewRef}
+    return (
 
-            onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: false })}
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
 
-            scrollEventThrottle={16}
+            <Stack.Screen options={{ headerShown: false }} />
 
-            contentContainerStyle={{ paddingBottom: 0 }}
 
-            showsVerticalScrollIndicator={false}
 
-          >
+            <Navbar onScrollToForm={scrollToForm} spotsLeft={spotsLeft} />
 
-            <HeroSection width={width} onScrollToForm={scrollToForm} />
 
 
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
 
-            {/* Doing It Right Section */}
+                <AnimatedScrollView
 
-            <DoingItRightSection width={width} />
+                    ref={scrollViewRef}
 
+                    onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: false })}
 
+                    scrollEventThrottle={16}
 
-            <ValuePropositionSection width={width} />
+                    contentContainerStyle={{ paddingBottom: 0 }}
 
+                    showsVerticalScrollIndicator={false}
 
+                >
 
-            <View style={styles.featuresHeaderSection}>
+                    <HeroSection width={width} onScrollToForm={scrollToForm} />
 
-                 <Text style={[styles.sectionHeader, { fontSize: 32, fontWeight: '800', textAlign: 'center' }]}>מה אתם מקבלים?</Text>
 
-            </View>
 
+                    {/* Doing It Right Section */}
 
+                    <DoingItRightSection width={width} />
 
-            <View style={styles.featuresList}>
 
-                {features.map((item, index) => (
 
-                    <FeatureCard key={index} item={item} index={index} width={width} />
+                    <ValuePropositionSection width={width} />
 
-                ))}
 
-            </View>
 
+                    <View style={styles.featuresHeaderSection}>
 
+                        <Text style={[styles.sectionHeader, { fontSize: 32, fontWeight: '800', textAlign: 'center' }]}>מה אתם מקבלים?</Text>
 
-            <TestimonialsSection width={width} />
+                    </View>
 
 
 
-            <PreOrderForm />
+                    <View style={styles.featuresList}>
 
+                        {features.map((item, index) => (
 
+                            <FeatureCard key={index} item={item} index={index} width={width} />
 
-            <View style={{ backgroundColor: '#111', paddingBottom: 0 }}>
+                        ))}
 
-                <Footer />
+                    </View>
 
-            </View>
 
-          </AnimatedScrollView>
 
-      </KeyboardAvoidingView>
+                    {/* Custom Divider */}
 
-    </SafeAreaView>
+                    <View style={styles.customDivider}>
 
-  );
+                        <View style={styles.dividerLine} />
+
+                    </View>
+
+
+
+                    <TestimonialsSection width={width} />
+
+                    {/* Custom Divider */}
+
+                    <View style={styles.customDivider}>
+
+                        <View style={styles.dividerLine} />
+
+                    </View>
+
+
+                    {/* Pricing Section Title - Above Both Cards */}
+                    <View style={styles.pricingSectionTitleContainer}>
+                        <Text style={styles.pricingSectionTitle}>
+                            תתחילו את המסע שלכם עם
+                        </Text>
+                        <Text style={styles.pricingSectionTitleBold}>
+                            Reel Rep Plus
+                        </Text>
+                    </View>
+
+                    {/* Pricing + Form Row (Desktop) / Column (Mobile) */}
+                    <View style={width >= 768 ? styles.pricingFormRow : styles.pricingFormColumn}>
+                        <View style={width >= 768 ? styles.pricingFormCard : {}}>
+                            <PricingSection />
+                        </View>
+                        <View style={width >= 768 ? styles.pricingFormCard : {}}>
+                            <PreOrderForm spotsLeft={spotsLeft} />
+                        </View>
+                    </View>
+
+
+
+                    <View style={{ backgroundColor: '#111', paddingBottom: insets.bottom }}>
+
+                        <Footer />
+
+                    </View>
+
+                </AnimatedScrollView>
+
+            </KeyboardAvoidingView>
+
+        </SafeAreaView>
+
+    );
 
 }
 
@@ -1158,1204 +1371,1831 @@ export default function LandingPage() {
 
 const styles = StyleSheet.create({
 
-  container: {
+    container: {
 
-    flex: 1,
+        flex: 1,
 
-    backgroundColor: COLORS.background,
+        backgroundColor: COLORS.background,
 
-  },
+    },
 
-  contentWrapper: {
+    contentWrapper: {
 
-    width: '100%',
+        width: '100%',
 
-    alignSelf: 'center',
+        alignSelf: 'center',
 
-  },
+    },
 
-  fixedHeader: {
+    fixedHeader: {
 
-    position: 'absolute',
+        position: 'absolute',
 
-    top: 0,
+        top: 0,
 
-    left: 0,
+        left: 0,
 
-    right: 0,
+        right: 0,
 
-    flexDirection: 'column',
+        flexDirection: 'column',
 
-    justifyContent: 'center',
+        justifyContent: 'center',
 
-    alignItems: 'center',
+        alignItems: 'center',
 
-    paddingHorizontal: 20,
+        paddingHorizontal: 20,
 
-    paddingTop: Platform.OS === 'ios' ? 50 : 16,
+        paddingTop: Platform.OS === 'ios' ? 45 : 20,
 
-    paddingBottom: 20,
+        paddingBottom: 16,
 
-    backgroundColor: COLORS.background,
+        backgroundColor: COLORS.background,
 
-    borderBottomLeftRadius: 20,
+        borderBottomLeftRadius: 40,
 
-    borderBottomRightRadius: 20,
+        borderBottomRightRadius: 40,
 
-    shadowColor: '#000',
+        shadowColor: '#000',
 
-    shadowOffset: { width: 0, height: 3 },
+        shadowOffset: { width: 0, height: 3 },
 
-    shadowOpacity: 0.1,
+        shadowOpacity: 0.1,
 
-    shadowRadius: 8,
+        shadowRadius: 8,
 
-    elevation: 5,
+        elevation: 5,
 
-    zIndex: 9999,
+        zIndex: 9999,
 
-  },
+    },
 
-  navButton: {
+    navButton: {
 
-    backgroundColor: COLORS.primary,
+        backgroundColor: COLORS.primary,
 
-    paddingVertical: 10,
+        paddingVertical: 10,
 
-    paddingHorizontal: 24,
+        paddingHorizontal: 28,
 
-    borderRadius: 50,
+        borderRadius: 50,
 
-    flex: 1,
+        alignItems: 'center',
 
-    maxWidth: 150,
+        shadowColor: COLORS.primary,
 
-    alignItems: 'center',
+        shadowOffset: { width: 0, height: 2 },
 
-  },
+        shadowOpacity: 0.25,
 
-  navButtonText: {
+        shadowRadius: 6,
 
-    color: '#fff',
+        elevation: 3,
 
-    fontFamily: 'Rubik_600SemiBold',
+    },
 
-    fontSize: 14,
+    navButtonText: {
 
-  },
+        color: '#fff',
 
-  navbarLogo: {
+        fontFamily: 'Rubik_400Regular',
 
-    width: 200,
+        fontSize: 14,
 
-    height: 50,
+    },
 
-    marginBottom: 12,
+    navbarLogo: {
 
-  },
+        width: 250,
 
-  darkHeroContainer: {
+        height: 65,
 
-    width: '100%',
+        marginTop: 12,
 
-    backgroundColor: '#1c1c1c',
+        marginBottom: 4,
 
-    alignItems: 'center',
+    },
 
-    justifyContent: 'flex-start',
+    darkHeroContainer: {
 
-    paddingTop: Platform.OS === 'ios' ? 170 : 136,
+        width: '100%',
 
-    paddingBottom: 40,
+        backgroundColor: '#1c1c1c',
 
-    borderBottomLeftRadius: 40,
+        alignItems: 'center',
 
-    borderBottomRightRadius: 40,
+        justifyContent: 'flex-start',
 
-    overflow: 'hidden',
+        paddingTop: Platform.OS === 'ios' ? 170 : 136,
 
-    marginBottom: 20,
+        paddingBottom: 40,
 
-  },
+        borderBottomLeftRadius: 40,
 
-  centeredContent: {
+        borderBottomRightRadius: 40,
 
-    width: '100%',
+        overflow: 'hidden',
 
-    alignItems: 'center',
+        marginBottom: 10,
 
-    zIndex: 10,
+        position: 'relative',
 
-  },
+        minHeight: 600,
 
-  heroSubtitle: {
+    },
 
-    fontFamily: 'Rubik_400Regular',
+    centeredContent: {
 
-    fontSize: 18,
+        width: '100%',
 
-    color: COLORS.textLight,
+        alignItems: 'center',
 
-    marginBottom: 10,
+        zIndex: 10,
 
-    lineHeight: 28,
+    },
 
-    paddingHorizontal: 20,
+    heroSubtitle: {
 
-  },
+        fontFamily: 'Rubik_400Regular',
 
-  ctaButtonLarge: {
+        fontSize: 18,
 
-    backgroundColor: COLORS.primary,
+        color: COLORS.textLight,
 
-    paddingVertical: 14,
+        marginBottom: 10,
 
-    paddingHorizontal: 32,
+        lineHeight: 28,
 
-    borderRadius: 50,
+        paddingHorizontal: 20,
 
-    alignSelf: 'center',
+    },
 
-  },
 
-  ctaButtonTextLarge: {
+    // --- Navbar Tagline ---
 
-    color: '#fff',
+    navbarTagline: {
 
-    fontFamily: 'Rubik_700Bold',
+        fontFamily: 'Rubik_600SemiBold',
 
-    fontSize: 18,
+        fontSize: 16,
 
-  },
+        color: '#555555',
 
-  sectionHeader: {
+        textAlign: 'center',
 
-    fontFamily: 'Rubik_700Bold',
+        marginTop: 2,
 
-    fontSize: 36,
+    },
 
-    color: COLORS.textDark,
 
-  },
 
+    // --- Hero Layout ---
 
+    heroContentCentered: {
 
-  // "Doing It Right" Section Styles (Calm.com inspired)
+        width: '100%',
 
-  doingItRightContainer: {
+        alignItems: 'center',
 
-      backgroundColor: '#FAFBFC',
+        paddingHorizontal: 20,
 
-      paddingVertical: 80,
+        paddingTop: 10,
 
-      paddingHorizontal: 20,
+        paddingBottom: 20,
 
-      alignItems: 'center',
+        zIndex: 10,
 
-      zIndex: 2,
+    },
 
-      position: 'relative',
 
-      marginBottom: -40,
 
-      paddingBottom: 120,
+    heroMainTitle: {
 
-      borderBottomLeftRadius: 40,
+        fontFamily: 'Rubik_700Bold',
 
-      borderBottomRightRadius: 40,
+        fontSize: 42,
 
-      shadowColor: '#000',
+        color: '#ffffff',
 
-      shadowOffset: { width: 0, height: 15 },
+        textAlign: 'center',
 
-      shadowOpacity: 0.2,
+        letterSpacing: -1,
 
-      shadowRadius: 25,
+        lineHeight: 52,
 
-      elevation: 5,
+    },
 
-  },
 
-  doingItRightTitle: {
 
-      fontFamily: 'Rubik_700Bold',
+    heroTagline: {
 
-      fontSize: 40,
+        fontFamily: 'Rubik_600SemiBold',
 
-      color: COLORS.textDark,
+        fontSize: 22,
 
-      textAlign: 'center',
+        color: 'rgba(255, 255, 255, 0.95)',
 
-      marginBottom: 60,
+        textAlign: 'center',
 
-      letterSpacing: -0.5,
+        lineHeight: 32,
 
-  },
+        marginTop: 12,
 
-  principlesGrid: {
+    },
 
-      width: '100%',
+    ctaButtonLarge: {
 
-      justifyContent: 'center',
+        backgroundColor: COLORS.primary,
 
-      alignItems: 'center',
+        paddingVertical: 14,
 
-  },
+        paddingHorizontal: 32,
 
-  principleCard: {
+        borderRadius: 50,
 
-      padding: 20,
+        alignSelf: 'center',
 
-      alignItems: 'center',
+    },
 
-  },
+    ctaButtonTextLarge: {
 
-  mobileDivider: {
+        color: '#fff',
 
-      height: 3,
+        fontFamily: 'Rubik_400Regular',
 
-      backgroundColor: 'rgba(31, 160, 155, 0.2)',
+        fontSize: 18,
 
-      marginVertical: 40,
+    },
 
-      marginHorizontal: 40,
+    sectionHeader: {
 
-      borderRadius: 2,
+        fontFamily: 'Rubik_400Regular',
 
-  },
+        fontSize: 36,
 
-  principleIconWrapper: {
+        color: COLORS.textDark,
 
-      alignItems: 'center',
+    },
 
-      justifyContent: 'center',
 
-      marginBottom: 24,
 
-  },
+    // "Doing It Right" Section Styles (Calm.com inspired)
 
-  principleIcon: {
+    doingItRightContainer: {
 
-      width: 80,
+        backgroundColor: '#FAFBFC',
 
-      height: 80,
+        paddingVertical: 80,
 
-  },
+        paddingHorizontal: 20,
 
-  principleTitle: {
+        alignItems: 'center',
 
-      fontFamily: 'Rubik_700Bold',
+        zIndex: 2,
 
-      fontSize: 22,
+        position: 'relative',
 
-      color: COLORS.textDark,
+        marginBottom: -40,
 
-      textAlign: 'center',
+        paddingBottom: 120,
 
-      marginBottom: 12,
+        borderBottomLeftRadius: 40,
 
-      lineHeight: 30,
+        borderBottomRightRadius: 40,
 
-  },
+        shadowColor: '#000',
 
-  principleDescription: {
+        shadowOffset: { width: 0, height: 15 },
 
-      fontFamily: 'Rubik_400Regular',
+        shadowOpacity: 0.2,
 
-      fontSize: 16,
+        shadowRadius: 25,
 
-      color: COLORS.textLight,
+        elevation: 5,
 
-      textAlign: 'center',
+    },
 
-      lineHeight: 26,
+    doingItRightTitle: {
 
-      maxWidth: 280,
+        fontFamily: 'Rubik_700Bold',
 
-  },
+        fontSize: 40,
 
-  disclaimerBox: {
+        color: COLORS.textDark,
 
-      padding: 16,
+        textAlign: 'center',
 
-      marginHorizontal: 20,
+        marginBottom: 60,
 
-      backgroundColor: 'rgba(31, 160, 155, 0.08)',
+        letterSpacing: -0.5,
 
-      borderColor: 'rgba(31, 160, 155, 0.2)',
+    },
 
-  },
+    principlesGrid: {
 
-  disclaimerText: {
+        width: '100%',
 
-      fontFamily: 'Rubik_600SemiBold',
+        justifyContent: 'center',
 
-      fontSize: 15,
+        alignItems: 'center',
 
-      color: COLORS.textDark,
+    },
 
-      textAlign: 'center',
+    principleCard: {
 
-      lineHeight: 22,
+        padding: 20,
 
-  },
+        alignItems: 'center',
 
+        overflow: 'visible',
 
+    },
 
-  // Modern Value Proposition Header Styles
+    mobileDivider: {
 
-  valuePropositionHeader: {
+        height: 3,
 
-      marginHorizontal: 20,
+        backgroundColor: 'rgba(31, 160, 155, 0.2)',
 
-      marginBottom: 20,
+        marginVertical: 40,
 
-      borderRadius: 28,
+        marginHorizontal: 40,
 
-      overflow: 'hidden',
+        borderRadius: 2,
 
-      shadowColor: '#1FA09B',
+    },
 
-      shadowOffset: { width: 0, height: 8 },
+    principleIconWrapper: {
 
-      shadowOpacity: 0.12,
+        alignItems: 'center',
 
-      shadowRadius: 24,
+        justifyContent: 'center',
 
-      elevation: 8,
+        marginBottom: 24,
 
-  },
+    },
 
-  valuePropositionGradient: {
+    principleIcon: {
 
-      padding: 40,
+        width: 80,
 
-      paddingVertical: 50,
+        height: 80,
 
-      alignItems: 'center',
+    },
 
-  },
+    principleTitle: {
 
-  headerBadge: {
+        fontFamily: 'Rubik_700Bold',
 
-      flexDirection: 'row-reverse',
+        fontSize: 22,
 
-      alignItems: 'center',
+        color: COLORS.textDark,
 
-      gap: 8,
+        textAlign: 'center',
 
-      backgroundColor: 'rgba(31, 160, 155, 0.15)',
+        marginBottom: 12,
 
-      paddingHorizontal: 20,
+        lineHeight: 30,
 
-      paddingVertical: 10,
+    },
 
-      borderRadius: 50,
+    principleDescription: {
 
-      marginBottom: 24,
+        fontFamily: 'Rubik_400Regular',
 
-      borderWidth: 1,
+        fontSize: 16,
 
-      borderColor: 'rgba(31, 160, 155, 0.3)',
+        color: COLORS.textLight,
 
-  },
+        textAlign: 'center',
 
-  headerBadgeText: {
+        lineHeight: 26,
 
-      fontFamily: 'Rubik_700Bold',
+        maxWidth: 280,
 
-      fontSize: 16,
+    },
 
-      color: '#1FA09B',
+    disclaimerBox: {
 
-      letterSpacing: 0.5,
+        padding: 16,
 
-  },
+        marginHorizontal: 20,
 
-  valuePropositionMainText: {
+        backgroundColor: 'rgba(31, 160, 155, 0.08)',
 
-      fontFamily: 'Rubik_700Bold',
+        borderColor: 'rgba(31, 160, 155, 0.2)',
 
-      fontSize: 26,
+    },
 
-      color: COLORS.textDark,
+    disclaimerText: {
 
-      textAlign: 'center',
+        fontFamily: 'Rubik_400Regular',
 
-      lineHeight: 38,
+        fontSize: 15,
 
-      marginBottom: 16,
+        color: COLORS.textDark,
 
-  },
+        textAlign: 'center',
 
-  valuePropositionSubText: {
+        lineHeight: 22,
 
-      fontFamily: 'Rubik_600SemiBold',
+    },
 
-      fontSize: 18,
 
-      color: COLORS.textLight,
 
-      textAlign: 'center',
+    // Modern Value Proposition Header Styles
 
-      lineHeight: 28,
+    valuePropositionHeader: {
 
-  },
+        marginHorizontal: 20,
 
-  cavedSection: {
+        marginBottom: 20,
 
-      marginHorizontal: 0,
+        borderRadius: 28,
 
-      marginTop: 0,
+        overflow: 'hidden',
 
-      marginBottom: 0,
+        shadowColor: '#1FA09B',
 
-      overflow: 'hidden',
+        shadowOffset: { width: 0, height: 8 },
 
-      shadowColor: '#000',
+        shadowOpacity: 0.12,
 
-      shadowOffset: { width: 0, height: -4 },
+        shadowRadius: 24,
 
-      shadowOpacity: 0.3,
+        elevation: 8,
 
-      shadowRadius: 15,
+    },
 
-      elevation: 1,
+    valuePropositionGradient: {
 
-      zIndex: 1,
+        padding: 40,
 
-      position: 'relative',
+        paddingVertical: 50,
 
-  },
+        alignItems: 'center',
 
-  cavedGradient: {
+    },
 
-      paddingTop: 100,
+    headerBadge: {
 
-      paddingBottom: 100,
+        flexDirection: 'row-reverse',
 
-      paddingHorizontal: 0,
+        alignItems: 'center',
 
-      borderRadius: 0,
+        gap: 8,
 
-  },
+        backgroundColor: 'rgba(31, 160, 155, 0.15)',
 
-  featuresHeaderSection: {
+        paddingHorizontal: 20,
 
-      backgroundColor: COLORS.background,
+        paddingVertical: 10,
 
-      paddingTop: 50,
+        borderRadius: 50,
 
-      paddingBottom: 20,
+        marginBottom: 24,
 
-      marginTop: -50,
+        borderWidth: 1,
 
-      borderTopLeftRadius: 40,
+        borderColor: 'rgba(31, 160, 155, 0.3)',
 
-      borderTopRightRadius: 40,
+    },
 
-      overflow: 'hidden',
+    headerBadgeText: {
 
-      zIndex: 2,
+        fontFamily: 'Rubik_400Regular',
 
-      position: 'relative',
+        fontSize: 16,
 
-  },
+        color: '#1FA09B',
 
-  meetThemSection: {
+        letterSpacing: 0.5,
 
-      alignItems: 'center',
+    },
 
-      marginTop: 0,
+    valuePropositionMainText: {
 
-      marginBottom: 10,
+        fontFamily: 'Rubik_400Regular',
 
-  },
+        fontSize: 26,
 
-  dividerLine: {
+        color: COLORS.textDark,
 
-      width: 60,
+        textAlign: 'center',
 
-      height: 4,
+        lineHeight: 38,
 
-      backgroundColor: '#1FA09B',
+        marginBottom: 16,
 
-      borderRadius: 10,
+    },
 
-      marginBottom: 20,
+    valuePropositionSubText: {
 
-  },
+        fontFamily: 'Rubik_400Regular',
 
-  meetThemText: {
+        fontSize: 18,
 
-      fontFamily: 'Rubik_700Bold',
+        color: COLORS.textLight,
 
-      fontSize: 22,
+        textAlign: 'center',
 
-      color: COLORS.textDark,
+        lineHeight: 28,
 
-      textAlign: 'center',
+    },
 
-      letterSpacing: 0.5,
+    cavedSection: {
 
-  },
+        marginHorizontal: 0,
 
+        marginTop: 0,
 
+        marginBottom: 0,
 
-  // Macro Cards
+        overflow: 'hidden',
 
-  macroCardContainer: {
+        shadowColor: '#000',
 
-      alignItems: 'center',
+        shadowOffset: { width: 0, height: -4 },
 
-      justifyContent: 'center',
+        shadowOpacity: 0.3,
 
-      marginBottom: 10,
+        shadowRadius: 15,
 
-      width: '100%',
+        elevation: 1,
 
-  },
+        zIndex: 1,
 
-  macroImageWrapper: {
+        position: 'relative',
 
-      width: '40%',
+    },
 
-      alignItems: 'center',
+    cavedGradient: {
 
-      justifyContent: 'center',
+        paddingTop: 100,
 
-  },
+        paddingBottom: 100,
 
-  macroImage: {
+        paddingHorizontal: 0,
 
-      width: 130,
+        borderRadius: 0,
 
-      height: 130,
+    },
 
-      resizeMode: 'contain',
+    featuresHeaderSection: {
 
-  },
+        backgroundColor: COLORS.background,
 
-  macroContentBox: {
+        paddingTop: 50,
 
-      width: '55%',
+        paddingBottom: 20,
 
-      padding: 16,
+        marginTop: -50,
 
-      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+        borderTopLeftRadius: 40,
 
-      backdropFilter: 'blur(10px)',
+        borderTopRightRadius: 40,
 
-      borderWidth: 1,
+        overflow: 'hidden',
 
-      borderColor: 'rgba(255, 255, 255, 0.25)',
+        zIndex: 2,
 
-      borderRadius: 24,
+        position: 'relative',
 
-      shadowColor: '#000',
+    },
 
-      shadowOpacity: 0.15,
+    meetThemSection: {
 
-      shadowRadius: 20,
+        alignItems: 'center',
 
-      shadowOffset: { width: 0, height: 10 },
+        marginTop: 0,
 
-  },
+        marginBottom: 10,
 
-  macroTitle: {
+    },
 
-      fontFamily: 'Rubik_700Bold',
+    dividerLine: {
 
-      fontSize: 20,
+        width: 60,
 
-      color: '#ffffff',
+        height: 4,
 
-      textAlign: 'right',
+        backgroundColor: '#1FA09B',
 
-      marginBottom: 4,
+        borderRadius: 10,
 
-  },
+        marginBottom: 20,
 
-  macroBadge: {
+    },
 
-      fontFamily: 'Rubik_600SemiBold',
+    meetThemText: {
 
-      fontSize: 14,
+        fontFamily: 'Rubik_400Regular',
 
-      color: '#1FA09B',
+        fontSize: 22,
 
-      textAlign: 'right',
+        color: COLORS.textDark,
 
-      marginBottom: 8,
+        textAlign: 'center',
 
-  },
+        letterSpacing: 0.5,
 
-  divider: {
+    },
 
-      height: 1,
 
-      backgroundColor: 'rgba(255, 255, 255, 0.2)',
 
-      width: '100%',
+    // Macro Cards
 
-      marginVertical: 8,
+    macroCardContainer: {
 
-  },
+        alignItems: 'center',
 
-  checkItemRow: {
+        justifyContent: 'center',
 
-      flexDirection: 'row-reverse',
+        marginBottom: 10,
 
-      alignItems: 'center',
+        width: '100%',
 
-      marginBottom: 6,
+    },
 
-      gap: 6,
+    macroImageWrapper: {
 
-  },
+        width: '40%',
 
-  checkItemText: {
+        alignItems: 'center',
 
-      fontFamily: 'Rubik_400Regular',
+        justifyContent: 'center',
 
-      fontSize: 14,
+    },
 
-      color: 'rgba(255, 255, 255, 0.9)',
+    macroImage: {
 
-      textAlign: 'right',
+        width: 130,
 
-  },
+        height: 130,
 
-  
+        resizeMode: 'contain',
 
-  // --- FEATURE CARDS (FIXED STYLES) ---
+    },
 
-  featuresList: {
+    macroContentBox: {
 
-      paddingHorizontal: 20,
+        width: '55%',
 
-      paddingBottom: 40,
+        padding: 16,
 
-      backgroundColor: COLORS.background,
+        backgroundColor: 'rgba(255, 255, 255, 0.15)',
 
-      alignItems: 'center',
+        backdropFilter: 'blur(10px)',
 
-  },
+        borderWidth: 1,
 
-  featureCardWrapper: {
+        borderColor: 'rgba(255, 255, 255, 0.25)',
 
-    backgroundColor: '#FFFFFF',
+        borderRadius: 24,
 
-    borderRadius: 24,
+        shadowColor: '#000',
 
-    marginBottom: 30,
+        shadowOpacity: 0.15,
 
-    shadowColor: "#1FA09B",
+        shadowRadius: 20,
 
-    shadowOffset: { width: 0, height: 8 },
+        shadowOffset: { width: 0, height: 10 },
 
-    shadowOpacity: 0.25,
+    },
 
-    shadowRadius: 20,
+    macroTitle: {
 
-    elevation: 15,
+        fontFamily: 'Rubik_700Bold',
 
-    overflow: 'visible',
+        fontSize: 20,
 
-    padding: 0,
+        color: '#ffffff',
 
-    maxWidth: 700,
+        textAlign: 'right',
 
-    width: '100%',
+        marginBottom: 4,
 
-    zIndex: 10,
+    },
 
-    position: 'relative',
+    macroBadge: {
 
-  },
+        fontFamily: 'Rubik_400Regular',
 
-  featureTextWrapper: {
+        fontSize: 14,
 
-      alignItems: 'center',
+        color: '#1FA09B',
 
-      paddingTop: 40,
+        textAlign: 'right',
 
-      paddingHorizontal: 24,
+        marginBottom: 8,
 
-      paddingBottom: 20,
+    },
 
-      zIndex: 2,
+    divider: {
 
-  },
+        height: 1,
 
-  // ICON: Rounded with glow effect, no background box
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
 
-  featureIcon: {
+        width: '100%',
 
-      width: 90,
+        marginVertical: 8,
 
-      height: 90,
+    },
 
-      marginBottom: 20,
+    checkItemRow: {
 
-      backgroundColor: 'transparent',
+        flexDirection: 'row-reverse',
 
-      borderRadius: 24,
+        alignItems: 'center',
 
-      shadowColor: "#1FA09B",
+        marginBottom: 6,
 
-      shadowOffset: { width: 0, height: 0 },
+        gap: 6,
 
-      shadowOpacity: 0.8,
+    },
 
-      shadowRadius: 30,
+    checkItemText: {
 
-  },
+        fontFamily: 'Rubik_400Regular',
 
-  // IMAGE MASK: Top Anchor - Shows top 75% of iPhone mockup, crops bottom 25%
+        fontSize: 14,
 
-  imageMask: {
+        color: 'rgba(255, 255, 255, 0.9)',
 
-      width: '100%',
+        textAlign: 'right',
 
-      aspectRatio: 0.55,   // Narrow, tall window (actual phone proportions)
+    },
 
-      overflow: 'hidden',
 
-      position: 'relative',
 
-  },
+    // --- FEATURE CARDS (FIXED STYLES) ---
 
-  featureImage: {
+    featuresList: {
 
-      width: '100%',
+        paddingHorizontal: 20,
 
-      height: '110%',      // Slightly extends to crop bottom 25% only
+        paddingBottom: 40,
 
-      position: 'absolute',
+        backgroundColor: COLORS.background,
 
-      top: 0,              // Anchored Top - shows full top, hides bottom
+        alignItems: 'center',
 
-      left: 0,
+    },
 
-      resizeMode: 'contain',  // Changed to 'contain' to show full phone
+    featureCardWrapper: {
 
-  },
+        backgroundColor: '#FFFFFF',
 
-  featureTitleBig: {
+        borderRadius: 24,
 
-    fontFamily: 'Rubik_700Bold',
+        marginBottom: 30,
 
-    fontSize: 26,
+        shadowColor: "#1FA09B",
 
-    marginBottom: 8,
+        shadowOffset: { width: 0, height: 8 },
 
-    color: COLORS.textDark,
+        shadowOpacity: 0.25,
 
-    textAlign: 'center',
+        shadowRadius: 20,
 
-  },
+        elevation: 15,
 
-  featureDesc: {
+        overflow: 'visible',
 
-    fontFamily: 'Rubik_400Regular',
+        padding: 0,
 
-    fontSize: 16,
+        maxWidth: 700,
 
-    lineHeight: 24,
+        width: '100%',
 
-    color: COLORS.textLight,
+        zIndex: 10,
 
-    textAlign: 'center',
+        position: 'relative',
 
-  },
+    },
 
+    featureTextWrapper: {
 
+        alignItems: 'center',
 
-  // --- Pre Order Form ---
+        paddingTop: 40,
 
-  preOrderContainer: {
+        paddingHorizontal: 24,
 
-      marginHorizontal: 20,
+        paddingBottom: 10,
 
-      marginBottom: 40,
+        zIndex: 2,
 
-      borderRadius: 30,
+    },
 
-      overflow: 'hidden',
+    // ICON: Rounded with glow effect, no background box
 
-      elevation: 5,
+    featureIcon: {
 
-      shadowColor: COLORS.primary,
+        width: 90,
 
-      shadowOffset: { width: 0, height: 10 },
+        height: 90,
 
-      shadowOpacity: 0.2,
+        marginBottom: 20,
 
-      shadowRadius: 20,
+        backgroundColor: 'transparent',
 
-  },
+        borderRadius: 24,
 
-  preOrderGradient: {
+        shadowColor: "#1FA09B",
 
-      padding: 30,
+        shadowOffset: { width: 0, height: 0 },
 
-      alignItems: 'center',
+        shadowOpacity: 0.8,
 
-  },
+        shadowRadius: 30,
 
-  preOrderTitle: {
+    },
 
-      fontFamily: 'Rubik_700Bold',
+    // IMAGE MASK: Top Anchor - Shows top 75% of iPhone mockup, crops bottom 25%
 
-      fontSize: 28,
+    imageMask: {
 
-      color: '#fff',
+        width: '100%',
 
-      marginBottom: 8,
+        aspectRatio: 0.55,   // Narrow, tall window (actual phone proportions)
 
-      textAlign: 'center',
+        overflow: 'hidden',
 
-  },
+        position: 'relative',
 
-  preOrderSubtitle: {
+    },
 
-      fontFamily: 'Rubik_600SemiBold',
+    featureImage: {
 
-      fontSize: 16,
+        width: '100%',
 
-      color: '#fff',
+        height: '110%',      // Slightly extends to crop bottom 25% only
 
-      marginBottom: 20,
+        position: 'absolute',
 
-      textAlign: 'center',
+        top: 0,              // Anchored Top - shows full top, hides bottom
 
-      backgroundColor: 'rgba(0,0,0,0.1)',
+        left: 0,
 
-      paddingHorizontal: 15,
+        resizeMode: 'contain',  // Changed to 'contain' to show full phone
 
-      paddingVertical: 5,
+    },
 
-      borderRadius: 20,
+    featureTitleBig: {
 
-  },
+        fontFamily: 'Rubik_700Bold',
 
-  preOrderLabel: {
+        fontSize: 26,
 
-      fontFamily: 'Rubik_400Regular',
+        marginBottom: 8,
 
-      fontSize: 14,
+        color: COLORS.textDark,
 
-      color: 'rgba(255,255,255,0.9)',
+        textAlign: 'center',
 
-      marginBottom: 20,
+    },
 
-      textAlign: 'center',
+    featureDesc: {
 
-  },
+        fontFamily: 'Rubik_400Regular',
 
-  formInputs: {
+        fontSize: 16,
 
-      width: '100%',
+        lineHeight: 24,
 
-      gap: 12,
+        color: COLORS.textLight,
 
-  },
+        textAlign: 'center',
 
-  input: {
+    },
 
-      backgroundColor: '#fff',
+    customDivider: {
 
-      borderRadius: 12,
+        alignItems: 'center',
 
-      paddingVertical: 14,
+        paddingTop: 50,
 
-      paddingHorizontal: 20,
+        paddingBottom: 20,
 
-      fontSize: 16,
+        backgroundColor: COLORS.background,
 
-      fontFamily: 'Rubik_400Regular',
+    },
 
-      color: COLORS.textDark,
 
-      width: '100%',
 
-  },
+    // --- Pre Order Form ---
 
-  submitButton: {
+    preOrderWrapper: {
 
-      backgroundColor: '#111',
+        marginHorizontal: 20,
 
-      paddingVertical: 16,
+        marginBottom: 40,
 
-      borderRadius: 12,
+        gap: 20,
 
-      alignItems: 'center',
+    },
 
-      marginTop: 10,
+    promoCard: {
 
-  },
+        borderRadius: 24,
 
-  submitButtonText: {
+        padding: 30,
 
-      color: '#fff',
+        alignItems: 'center',
 
-      fontFamily: 'Rubik_700Bold',
+        shadowColor: COLORS.primary,
 
-      fontSize: 18,
+        shadowOffset: { width: 0, height: 8 },
 
-  },
+        shadowOpacity: 0.3,
 
+        shadowRadius: 20,
 
+        elevation: 8,
 
-  // --- Footer ---
+    },
 
-  footer: {
+    formCard: {
 
-    padding: 20,
+        backgroundColor: '#fff',
 
-    backgroundColor: '#111',
+        borderRadius: 24,
 
-    flexDirection: 'row-reverse',
+        padding: 30,
 
-    justifyContent: 'space-between',
+        alignItems: 'center',
 
-    alignItems: 'center',
+        shadowColor: '#000',
 
-    width: '100%',
+        shadowOffset: { width: 0, height: 8 },
 
-  },
+        shadowOpacity: 0.15,
 
-  footerLinks: {
+        shadowRadius: 20,
 
-    flexDirection: 'row-reverse',
+        elevation: 5,
 
-    gap: 20,
+    },
 
-  },
+    preOrderTitle: {
 
-  footerText: {
+        fontFamily: 'Rubik_700Bold',
 
-    color: '#666',
+        fontSize: 28,
 
-    fontFamily: 'Rubik_400Regular',
+        color: COLORS.textDark,
 
-    fontSize: 12,
+        marginBottom: 8,
 
-  },
+        textAlign: 'center',
 
-  footerLink: {
+    },
 
-    color: '#fff',
+    preOrderHighlightText: {
 
-    fontFamily: 'Rubik_600SemiBold',
+        fontFamily: 'Rubik_400Regular',
 
-    fontSize: 14,
+        fontSize: 16,
 
-  },
+        color: '#fff',
 
-  // --- Testimonials ---
+        textAlign: 'center',
 
-  testimonialCard: {
+        marginBottom: 8,
 
-    width: 380,
+        lineHeight: 24,
 
-    height: 320,
+    },
 
-    padding: 40,
+    preOrderHighlightTextBold: {
 
-    borderRadius: 24,
+        fontFamily: 'Rubik_400Regular',
 
-    justifyContent: 'space-between',
+        fontSize: 22,
 
-  },
+        color: '#fff',
 
-  quoteIcon: {
+        textAlign: 'center',
 
-    fontSize: 80,
+        marginBottom: 16,
 
-    color: 'rgba(31, 160, 155, 0.2)',
+        lineHeight: 30,
 
-    fontFamily: 'Rubik_700Bold',
+    },
 
-    lineHeight: 80,
+    freeTextHighlight: {
 
-    marginBottom: -20,
+        fontFamily: 'Rubik_400Regular',
 
-  },
+        fontSize: 28,
 
-  testimonialText: {
+        color: '#000',
 
-    fontSize: 18,
+    },
 
-    color: COLORS.textDark,
+    promoTimerWrapper: {
 
-    fontFamily: 'Rubik_400Regular',
+        alignItems: 'center',
 
-    lineHeight: 28,
+        marginTop: 16,
 
-    flex: 1,
+    },
 
-    textAlign: 'right',
+    preOrderLabel: {
 
-  },
+        fontFamily: 'Rubik_400Regular',
 
-  testimonialAuthor: {
+        fontSize: 14,
 
-    fontSize: 16,
+        color: COLORS.textLight,
 
-    color: COLORS.textDark,
+        marginBottom: 20,
 
-    fontFamily: 'Rubik_600SemiBold',
+        textAlign: 'center',
 
-    marginBottom: 12,
+    },
 
-    textAlign: 'right',
+    formInputs: {
 
-  },
+        width: '100%',
 
-  starsContainer: {
+        gap: 12,
 
-    flexDirection: 'row-reverse',
+    },
 
-    alignItems: 'center',
+    input: {
 
-  },
+        backgroundColor: '#fff',
 
+        borderRadius: 12,
 
+        paddingVertical: 14,
 
-  // --- Navbar Promo & Timer ---
+        paddingHorizontal: 20,
 
-  navbarPromoText: {
+        fontSize: 16,
 
-    fontFamily: 'Rubik_600SemiBold',
+        fontFamily: 'Rubik_400Regular',
 
-    fontSize: 12,
+        color: COLORS.textDark,
 
-    color: COLORS.textDark,
+        width: '100%',
 
-    marginBottom: 10,
+    },
 
-    textAlign: 'center',
+    submitButton: {
 
-  },
+        backgroundColor: '#111',
 
-  navbarButtonRow: {
+        paddingVertical: 16,
 
-    flexDirection: 'row-reverse',
+        borderRadius: 12,
 
-    alignItems: 'center',
+        alignItems: 'center',
 
-    justifyContent: 'center',
+        marginTop: 10,
 
-    gap: 12,
+    },
 
-    width: '100%',
+    submitButtonText: {
 
-  },
+        color: '#fff',
 
-  navbarTimerBox: {
+        fontFamily: 'Rubik_400Regular',
 
-    flex: 1,
+        fontSize: 18,
 
-    maxWidth: 150,
+    },
 
-  },
 
-  timerCompact: {
 
-    backgroundColor: 'rgba(31, 160, 155, 0.1)',
+    // --- Footer ---
 
-    paddingVertical: 10,
+    footer: {
 
-    borderRadius: 50,
+        padding: 20,
 
-    borderWidth: 1,
+        backgroundColor: '#111',
 
-    borderColor: COLORS.primary,
+        flexDirection: 'row-reverse',
 
-    alignItems: 'center',
+        justifyContent: 'space-between',
 
-    justifyContent: 'center',
+        alignItems: 'center',
 
-  },
+        width: '100%',
 
-  timerTextCompact: {
+    },
 
-    fontFamily: 'Rubik_700Bold',
+    footerLinks: {
 
-    fontSize: 16,
+        flexDirection: 'row-reverse',
 
-    color: COLORS.primary,
+        gap: 20,
 
-    letterSpacing: 1,
+    },
 
-  },
+    footerText: {
 
-  timerContainer: {
+        color: '#666',
 
-    backgroundColor: 'rgba(0, 0, 0, 0.15)',
+        fontFamily: 'Rubik_400Regular',
 
-    paddingHorizontal: 20,
+        fontSize: 12,
 
-    paddingVertical: 8,
+    },
 
-    borderRadius: 16,
+    footerLink: {
 
-    borderWidth: 2,
+        color: '#fff',
 
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+        fontFamily: 'Rubik_400Regular',
 
-    marginTop: 8,
+        fontSize: 14,
 
-  },
+    },
 
-  timerText: {
+    // --- Testimonials ---
 
-    fontFamily: 'Rubik_700Bold',
+    testimonialCard: {
 
-    fontSize: 22,
+        width: 380,
 
-    color: '#fff',
+        height: 320,
 
-    letterSpacing: 2,
+        padding: 40,
 
-    textAlign: 'center',
+        borderRadius: 24,
 
-  },
+        justifyContent: 'space-between',
 
+    },
 
+    quoteIcon: {
 
-  // --- PreOrder Form Timer ---
+        fontSize: 80,
 
-  preOrderPromoBox: {
+        color: 'rgba(31, 160, 155, 0.2)',
 
-    alignItems: 'center',
+        fontFamily: 'Rubik_400Regular',
 
-    marginBottom: 16,
+        lineHeight: 80,
 
-  },
+        marginBottom: -20,
 
-  preOrderTimerWrapper: {
+    },
 
-    alignItems: 'center',
+    testimonialText: {
 
-    marginTop: 12,
+        fontSize: 18,
 
-  },
+        color: COLORS.textDark,
 
-  preOrderTimerLabel: {
+        fontFamily: 'Rubik_400Regular',
 
-    fontFamily: 'Rubik_600SemiBold',
+        lineHeight: 28,
 
-    fontSize: 14,
+        flex: 1,
 
-    color: 'rgba(255, 255, 255, 0.9)',
+        textAlign: 'right',
 
-    marginBottom: 6,
+    },
 
-    textAlign: 'center',
+    testimonialAuthor: {
 
-  },
+        fontSize: 16,
+
+        color: COLORS.textDark,
+
+        fontFamily: 'Rubik_600SemiBold',
+
+        marginBottom: 12,
+
+        textAlign: 'right',
+
+    },
+
+    starsContainer: {
+
+        flexDirection: 'row-reverse',
+
+        alignItems: 'center',
+
+    },
+
+    // --- Pricing Section ---
+
+    pricingSection: {
+
+        paddingVertical: 60,
+
+        paddingHorizontal: 20,
+
+        backgroundColor: COLORS.background,
+
+        alignItems: 'center',
+
+    },
+
+    pricingFormRow: {
+        flexDirection: 'row',
+        backgroundColor: COLORS.background,
+        paddingHorizontal: 40,
+        alignItems: 'stretch',
+        gap: 40,
+        maxWidth: 1200,
+        width: '100%',
+        alignSelf: 'center',
+    },
+
+    pricingFormColumn: {
+        flexDirection: 'column',
+        backgroundColor: COLORS.background,
+    },
+
+    pricingSectionTitleContainer: {
+        backgroundColor: COLORS.background,
+        paddingTop: 60,
+        paddingBottom: 30,
+        alignItems: 'center',
+    },
+
+    pricingFormCard: {
+        flex: 1,
+        minHeight: 400,
+    },
+
+    pricingSectionTitle: {
+
+        fontFamily: 'Rubik_700Bold',
+
+        fontSize: 24,
+
+        color: COLORS.textDark,
+
+        textAlign: 'center',
+
+        marginBottom: 8,
+
+    },
+
+    pricingSectionTitleBold: {
+
+        fontFamily: 'Rubik_400Regular',
+
+        fontSize: 28,
+
+        color: COLORS.primary,
+
+        textAlign: 'center',
+
+        marginBottom: 32,
+
+    },
+
+    pricingCard: {
+
+        backgroundColor: '#fff',
+
+        borderRadius: 20,
+
+        borderWidth: 2,
+
+        borderColor: COLORS.primary,
+
+        padding: 20,
+
+        width: '100%',
+
+        maxWidth: 500,
+
+        shadowColor: COLORS.primary,
+
+        shadowOffset: { width: 0, height: 8 },
+
+        shadowOpacity: 0.15,
+
+        shadowRadius: 20,
+
+        elevation: 8,
+
+        position: 'relative',
+
+        overflow: 'visible',
+
+    },
+
+    freeTrialBadge: {
+
+        position: 'absolute',
+
+        top: -12,
+
+        right: 20,
+
+        backgroundColor: COLORS.primary,
+
+        paddingHorizontal: 16,
+
+        paddingVertical: 6,
+
+        borderRadius: 20,
+
+        shadowColor: COLORS.primary,
+
+        shadowOffset: { width: 0, height: 4 },
+
+        shadowOpacity: 0.3,
+
+        shadowRadius: 8,
+
+        elevation: 5,
+
+    },
+
+    freeTrialText: {
+
+        fontFamily: 'Rubik_400Regular',
+
+        fontSize: 14,
+
+        color: '#fff',
+
+    },
+
+    pricingContent: {
+
+        flexDirection: 'row-reverse',
+
+        justifyContent: 'space-between',
+
+        alignItems: 'center',
+
+        marginTop: 12,
+
+    },
+
+    pricingLeft: {
+
+        alignItems: 'flex-end',
+
+    },
+
+    pricingLabel: {
+
+        fontFamily: 'Rubik_400Regular',
+
+        fontSize: 18,
+
+        color: COLORS.textDark,
+
+        marginBottom: 4,
+
+    },
+
+    pricingYearly: {
+
+        fontFamily: 'Rubik_400Regular',
+
+        fontSize: 24,
+
+        color: COLORS.textDark,
+
+    },
+
+    pricingRight: {
+
+        alignItems: 'flex-start',
+
+    },
+
+    pricingMonthly: {
+
+        fontFamily: 'Rubik_400Regular',
+
+        fontSize: 24,
+
+        color: COLORS.primary,
+
+    },
+
+    pricingDisclaimer: {
+
+        fontFamily: 'Rubik_400Regular',
+
+        fontSize: 13,
+
+        color: COLORS.textLight,
+
+        textAlign: 'center',
+
+        marginTop: 20,
+
+        maxWidth: 500,
+
+        lineHeight: 20,
+
+    },
+
+
+
+    // --- Navbar Promo & Timer ---
+
+    navbarPromoText: {
+
+        fontFamily: 'Rubik_400Regular',
+
+        fontSize: 11,
+
+        color: COLORS.textLight,
+
+        marginBottom: 12,
+
+        textAlign: 'center',
+
+        opacity: 0.85,
+
+    },
+
+    navbarButtonRow: {
+
+        flexDirection: 'row-reverse',
+
+        alignItems: 'center',
+
+        justifyContent: 'center',
+
+        gap: 10,
+
+        width: '100%',
+
+        maxWidth: 360,
+
+    },
+
+    navbarTimerBox: {
+
+        flex: 1,
+
+        maxWidth: 150,
+
+    },
+
+    timerCompact: {
+
+        backgroundColor: 'rgba(31, 160, 155, 0.08)',
+
+        paddingVertical: 12,
+
+        paddingHorizontal: 4,
+
+        borderRadius: 50,
+
+        borderWidth: 1.5,
+
+        borderColor: 'rgba(31, 160, 155, 0.3)',
+
+        alignItems: 'center',
+
+        justifyContent: 'center',
+
+    },
+
+    timerTextCompact: {
+
+        fontFamily: 'Rubik_400Regular',
+
+        fontSize: 15,
+
+        color: COLORS.primary,
+
+        letterSpacing: 0.5,
+
+    },
+
+    timerContainer: {
+
+        backgroundColor: 'rgba(0, 0, 0, 0.15)',
+
+        paddingHorizontal: 24,
+
+        paddingVertical: 12,
+
+        borderRadius: 20,
+
+        borderWidth: 2,
+
+        borderColor: 'rgba(255, 255, 255, 0.3)',
+
+        marginTop: 8,
+
+    },
+
+    timerText: {
+
+        fontFamily: 'Rubik_400Regular',
+
+        fontSize: 32,
+
+        color: '#fff',
+
+        letterSpacing: 3,
+
+        textAlign: 'center',
+
+    },
+
+
+
+    // --- PreOrder Form Timer ---
+
+    preOrderTimerLabel: {
+
+        fontFamily: 'Rubik_400Regular',
+
+        fontSize: 14,
+
+        color: '#fff',
+
+        marginBottom: 8,
+
+        textAlign: 'center',
+
+    },
+
+
+
+    // --- Spots Counter ---
+
+    spotsCounterContainer: {
+
+        alignItems: 'center',
+
+        marginTop: 12,
+
+        width: '100%',
+
+    },
+
+    spotsCounterText: {
+
+        fontFamily: 'Rubik_400Regular',
+
+        fontSize: 16,
+
+        color: '#fff',
+
+        textAlign: 'center',
+
+        marginBottom: 12,
+
+    },
+
+    progressBarContainer: {
+
+        width: '100%',
+
+        height: 8,
+
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+
+        borderRadius: 10,
+
+        overflow: 'hidden',
+
+        marginBottom: 8,
+
+    },
+
+    progressBarFill: {
+
+        height: '100%',
+
+        backgroundColor: '#fff',
+
+        borderRadius: 10,
+
+    },
+
+    spotsSubtext: {
+
+        fontFamily: 'Rubik_400Regular',
+
+        fontSize: 12,
+
+        color: 'rgba(255, 255, 255, 0.8)',
+
+        textAlign: 'center',
+
+    },
+
+
+
+    // --- Beta Badge ---
+
+    betaBadge: {
+
+        backgroundColor: 'rgba(31, 160, 155, 0.2)',
+
+        paddingHorizontal: 16,
+
+        paddingVertical: 8,
+
+        borderRadius: 20,
+
+        borderWidth: 1,
+
+        borderColor: 'rgba(31, 160, 155, 0.4)',
+
+        marginTop: 8,
+
+        flexDirection: 'row',
+
+        alignItems: 'center',
+
+        justifyContent: 'center',
+
+    },
+
+    betaBadgeText: {
+
+        fontFamily: 'Rubik_400Regular',
+
+        fontSize: 13,
+
+        color: '#1FA09B',
+
+        textAlign: 'center',
+
+    },
+
+
+
+    // --- Early Bird Pricing ---
+
+    preOrderSubtext: {
+
+        fontFamily: 'Rubik_400Regular',
+
+        fontSize: 14,
+
+        color: 'rgba(255, 255, 255, 0.9)',
+
+        textAlign: 'center',
+
+        marginTop: 4,
+
+    },
+
+
+
+    // --- Hero Progress Bar ---
+
+    heroProgressWrapper: {
+
+        width: '100%',
+
+        maxWidth: 400,
+
+        marginTop: 24,
+
+        paddingHorizontal: 20,
+
+        zIndex: 100,
+
+        position: 'relative',
+
+        backgroundColor: 'rgba(31, 160, 155, 0.2)',
+
+        paddingVertical: 16,
+
+        borderRadius: 12,
+
+    },
+
+    heroProgressText: {
+
+        fontFamily: 'Rubik_400Regular',
+
+        fontSize: 14,
+
+        color: 'rgba(255, 255, 255, 0.9)',
+
+    },
+
+    heroProgressBar: {
+
+        width: '100%',
+
+        height: 24,
+
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+
+        borderRadius: 12,
+
+        overflow: 'hidden',
+
+        borderWidth: 2,
+
+        borderColor: 'rgba(255, 255, 255, 0.5)',
+
+    },
+
+    heroProgressFill: {
+
+        height: '100%',
+
+        backgroundColor: '#1FA09B',
+
+        borderRadius: 10,
+
+        shadowColor: '#1FA09B',
+
+        shadowOffset: { width: 0, height: 0 },
+
+        shadowOpacity: 0.8,
+
+        shadowRadius: 8,
+
+    },
+
+
+
+    // --- Testimonial Role ---
+
+    testimonialRole: {
+
+        fontSize: 14,
+
+        color: COLORS.textLight,
+
+        fontFamily: 'Rubik_400Regular',
+
+        marginBottom: 12,
+
+        textAlign: 'right',
+
+    },
+
+    // --- Contact Modal ---
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+
+    contactPopup: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 20,
+        padding: 30,
+        width: '90%',
+        maxWidth: 400,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 10,
+        elevation: 10,
+    },
+
+    contactPopupTitle: {
+        fontFamily: 'Rubik_700Bold',
+        fontSize: 24,
+        color: COLORS.textDark,
+        marginBottom: 20,
+    },
+
+    emailContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        backgroundColor: '#F9FAFB',
+        padding: 16,
+        borderRadius: 12,
+        marginBottom: 20,
+        width: '100%',
+    },
+
+    emailText: {
+        fontFamily: 'Rubik_400Regular',
+        fontSize: 16,
+        color: COLORS.primary,
+    },
+
+    closeButton: {
+        backgroundColor: COLORS.primary,
+        paddingVertical: 12,
+        paddingHorizontal: 30,
+        borderRadius: 25,
+    },
+
+    closeButtonText: {
+        fontFamily: 'Rubik_600SemiBold',
+        fontSize: 16,
+        color: '#FFFFFF',
+    },
 
 });
