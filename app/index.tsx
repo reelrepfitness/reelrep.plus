@@ -165,24 +165,30 @@ const SpotsCounter = ({ spotsLeft, totalSpots = 100 }: { spotsLeft: number, tota
 const Navbar = ({ onScrollToForm, spotsLeft }: { onScrollToForm: () => void, spotsLeft: number }) => (
 
     <View style={styles.fixedHeader}>
+        <LinearGradient
+            colors={['#1c1c1c', '#2a2a2a', '#1c1c1c']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.navbarGradient}
+        >
+            <Image
 
-        <Image
+                source={require('../assets/images/logo-reelrepplus-white.png')}
 
-            source={require('../assets/images/logo-reelrep-plus-black.png')}
+                style={styles.navbarLogo}
 
-            style={styles.navbarLogo}
+                resizeMode="contain"
 
-            resizeMode="contain"
+            />
 
-        />
+            {/* Tagline */}
 
-        {/* Tagline */}
+            <Text style={styles.navbarTagline}>
 
-        <Text style={styles.navbarTagline}>
+                אפליקציית מעקב התזונה האחרונה שלך
 
-            אפליקציית מעקב התזונה האחרונה שלך
-
-        </Text>
+            </Text>
+        </LinearGradient>
 
     </View>
 
@@ -852,229 +858,155 @@ const FeatureCard = ({ item, index, width }: { item: any, index: number, width: 
 const PreOrderForm = ({ spotsLeft }: { spotsLeft: number }) => {
 
     const [name, setName] = useState('');
-
     const [phone, setPhone] = useState('');
-
     const [email, setEmail] = useState('');
-
     const [loading, setLoading] = useState(false);
-
-
+    const [errors, setErrors] = useState({ name: false, phone: false, email: false });
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     // Your Google Apps Script Web App URL
-
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxuyB9w7ziZYlfaB5geXUe9LhfeeLmnJhuH4odnazEV_SgBiJ7kKGOQWLVxhoQRJzs/exec";
 
-
-
     const handleSubmit = async () => {
+        // Reset errors
+        setErrors({ name: false, phone: false, email: false });
 
-        if (!name || !phone || !email) {
+        let hasError = false;
+        const newErrors = { name: false, phone: false, email: false };
 
-            Alert.alert("חסרים פרטים", "אנא מלא שם, טלפון ואימייל כדי שנוכל לחזור אליך.");
-
-            return;
-
+        if (!name) {
+            newErrors.name = true;
+            hasError = true;
+        }
+        if (!phone) {
+            newErrors.phone = true;
+            hasError = true;
+        }
+        if (!email) {
+            newErrors.email = true;
+            hasError = true;
         }
 
-
+        if (hasError) {
+            setErrors(newErrors);
+            Alert.alert("חסרים פרטים", "אנא מלא את כל השדות המסומנים באדום כדי שנוכל לחזור אליך.");
+            return;
+        }
 
         setLoading(true);
 
-
-
         try {
-
             const response = await fetch(GOOGLE_SCRIPT_URL, {
-
                 method: "POST",
-
                 headers: { "Content-Type": "text/plain;charset=utf-8" },
-
                 body: JSON.stringify({ name, phone, email }),
-
             });
-
-
 
             const result = await response.json();
 
-
-
             if (result.result === "success") {
-
-                Alert.alert("ברוכים הבאים! 🎉", "שמרנו לכם מקום בגל הראשון!\n\nבדקו את המייל לפרטים נוספים.");
-
+                setShowSuccessModal(true);
                 setName('');
-
                 setPhone('');
-
                 setEmail('');
-
             } else {
-
                 Alert.alert("אופס", "הייתה בעיה בשמירה, נסה שוב.");
-
             }
-
         } catch (error) {
-
             console.error(error);
-
             Alert.alert("שגיאה", "לא הצלחנו להתחבר לשרת כרגע.");
-
         } finally {
-
             setLoading(false);
-
         }
-
     };
 
-
-
     return (
-
         <View style={styles.preOrderWrapper}>
-
-            {/* Promo Card */}
-
-            <LinearGradient
-
-                colors={['#1FA09B', '#15807B']}
-
-                style={styles.promoCard}
-
-            >
-
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
-
-                    <Feather name="award" size={18} color="#fff" />
-
-                    <Text style={styles.preOrderHighlightText}>
-
-                        מחיר מיוחד ל-100 הראשונים
-
-                    </Text>
-
-                </View>
-
-                <Text style={styles.preOrderHighlightTextBold}>
-
-                    ₪12/חודש <Text style={styles.freeTextHighlight}>לכל החיים</Text>
-
-                </Text>
-
-                <Text style={styles.preOrderSubtext}>
-
-                    במקום ₪15 + חודש ראשון חינם
-
-                </Text>
-
-                <View style={styles.promoTimerWrapper}>
-
-                    <SpotsCounter spotsLeft={spotsLeft} />
-
-                </View>
-
-            </LinearGradient>
-
-
-
             {/* Form Card */}
-
             <View style={styles.formCard}>
-
                 <Text style={styles.preOrderTitle}>הצטרפו לגל הראשון!</Text>
-
                 <Text style={styles.preOrderLabel}>השאירו פרטים ונשלח לכם קישור להורדה בינואר 2025</Text>
 
-
-
                 <View style={styles.formInputs}>
-
                     <TextInput
-
-                        style={styles.input}
-
+                        style={[styles.input, errors.name && styles.inputError]}
                         placeholder="שם מלא"
-
                         placeholderTextColor="#888"
-
                         value={name}
-
-                        onChangeText={setName}
-
+                        onChangeText={(text) => {
+                            setName(text);
+                            if (errors.name) setErrors({ ...errors, name: false });
+                        }}
                         textAlign="right"
-
                         editable={!loading}
-
                     />
-
                     <TextInput
-
-                        style={styles.input}
-
+                        style={[styles.input, errors.phone && styles.inputError]}
                         placeholder="טלפון נייד"
-
                         placeholderTextColor="#888"
-
                         keyboardType="phone-pad"
-
                         value={phone}
-
-                        onChangeText={setPhone}
-
+                        onChangeText={(text) => {
+                            setPhone(text);
+                            if (errors.phone) setErrors({ ...errors, phone: false });
+                        }}
                         textAlign="right"
-
                         editable={!loading}
-
                     />
-
                     <TextInput
-
-                        style={styles.input}
-
+                        style={[styles.input, errors.email && styles.inputError]}
                         placeholder="אימייל"
-
                         placeholderTextColor="#888"
-
                         keyboardType="email-address"
-
                         value={email}
-
-                        onChangeText={setEmail}
-
+                        onChangeText={(text) => {
+                            setEmail(text);
+                            if (errors.email) setErrors({ ...errors, email: false });
+                        }}
                         textAlign="right"
-
                         editable={!loading}
-
                     />
-
-
 
                     <TouchableOpacity
-
                         style={[styles.submitButton, { opacity: loading ? 0.7 : 1 }]}
-
                         onPress={handleSubmit}
-
                         disabled={loading}
-
                     >
-
                         <Text style={styles.submitButtonText}>{loading ? "שומר..." : "שריינו לי מקום!"}</Text>
-
                     </TouchableOpacity>
-
                 </View>
-
             </View>
 
+            {/* Success Modal */}
+            <Modal
+                visible={showSuccessModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowSuccessModal(false)}
+            >
+                <TouchableOpacity
+                    style={styles.modalOverlay}
+                    activeOpacity={1}
+                    onPress={() => setShowSuccessModal(false)}
+                >
+                    <View style={styles.contactPopup}>
+                        <Feather name="check-circle" size={48} color="#1FA09B" style={{ marginBottom: 16 }} />
+                        <Text style={styles.contactPopupTitle}>ברוכים הבאים! 🎉</Text>
+                        <Text style={[styles.emailText, { textAlign: 'center', marginBottom: 24, paddingHorizontal: 10, lineHeight: 24 }]}>
+                            שמרנו לכם מקום בגל הראשון!{'\n'}בדקו את המייל לפרטים נוספים.
+                        </Text>
+
+                        <TouchableOpacity
+                            style={styles.closeButton}
+                            onPress={() => setShowSuccessModal(false)}
+                        >
+                            <Text style={styles.closeButtonText}>איזה כיף!</Text>
+                        </TouchableOpacity>
+                    </View>
+                </TouchableOpacity>
+            </Modal>
         </View>
-
     );
-
 };
 
 
@@ -1100,6 +1032,12 @@ const Footer = () => {
                     <Link href="/privacy" asChild>
                         <TouchableOpacity>
                             <Text style={styles.footerLink}>פרטיות</Text>
+                        </TouchableOpacity>
+                    </Link>
+
+                    <Link href="/termsofuse" asChild>
+                        <TouchableOpacity>
+                            <Text style={styles.footerLink}>תנאי שימוש</Text>
                         </TouchableOpacity>
                     </Link>
                 </View>
@@ -1171,7 +1109,7 @@ export default function LandingPage() {
 
     // Spots available for early access (update manually as people sign up)
 
-    const [spotsLeft] = useState(79); // 21 already filled out of 100
+    const [spotsLeft] = useState(18); // 82 already filled out of 100
 
 
 
@@ -1325,7 +1263,7 @@ export default function LandingPage() {
                     </View>
 
 
-                    {/* Pricing Section Title - Above Both Cards */}
+                    {/* Pricing Section Title */}
                     <View style={styles.pricingSectionTitleContainer}>
                         <Text style={styles.pricingSectionTitle}>
                             תתחילו את המסע שלכם עם
@@ -1335,14 +1273,38 @@ export default function LandingPage() {
                         </Text>
                     </View>
 
-                    {/* Pricing + Form Row (Desktop) / Column (Mobile) */}
-                    <View style={width >= 768 ? styles.pricingFormRow : styles.pricingFormColumn}>
-                        <View style={width >= 768 ? styles.pricingFormCard : {}}>
-                            <PricingSection />
-                        </View>
-                        <View style={width >= 768 ? styles.pricingFormCard : {}}>
-                            <PreOrderForm spotsLeft={spotsLeft} />
-                        </View>
+                    {/* Pricing Card - Full Width */}
+                    <View style={styles.pricingFullWidth}>
+                        <PricingSection />
+                    </View>
+
+                    {/* Promo Offer Card - Full Width */}
+                    <View style={styles.promoOfferWrapper}>
+                        <LinearGradient
+                            colors={['#1FA09B', '#15807B']}
+                            style={styles.promoOfferCard}
+                        >
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+                                <Feather name="award" size={18} color="#fff" />
+                                <Text style={styles.preOrderHighlightText}>
+                                    הצעה מיוחדת ל-100 הראשונים
+                                </Text>
+                            </View>
+                            <Text style={styles.preOrderHighlightTextBold}>
+                                <Text style={styles.freeTextHighlight}>חודש ראשון חינם</Text>
+                            </Text>
+                            <Text style={styles.preOrderSubtext}>
+                                הצטרפו עכשיו וקבלו חודש ראשון ללא עלות
+                            </Text>
+                            <View style={styles.promoTimerWrapper}>
+                                <SpotsCounter spotsLeft={spotsLeft} />
+                            </View>
+                        </LinearGradient>
+                    </View>
+
+                    {/* Sign Up Form */}
+                    <View style={styles.signUpFormWrapper}>
+                        <PreOrderForm spotsLeft={spotsLeft} />
                     </View>
 
 
@@ -1397,19 +1359,9 @@ const styles = StyleSheet.create({
 
         right: 0,
 
-        flexDirection: 'column',
+        zIndex: 9999,
 
-        justifyContent: 'center',
-
-        alignItems: 'center',
-
-        paddingHorizontal: 20,
-
-        paddingTop: Platform.OS === 'ios' ? 45 : 20,
-
-        paddingBottom: 16,
-
-        backgroundColor: COLORS.background,
+        overflow: 'hidden',
 
         borderBottomLeftRadius: 40,
 
@@ -1419,14 +1371,22 @@ const styles = StyleSheet.create({
 
         shadowOffset: { width: 0, height: 3 },
 
-        shadowOpacity: 0.1,
+        shadowOpacity: 0.3,
 
         shadowRadius: 8,
 
         elevation: 5,
 
-        zIndex: 9999,
+    },
 
+    navbarGradient: {
+        width: '100%',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingTop: Platform.OS === 'ios' ? 45 : 20,
+        paddingBottom: 16,
     },
 
     navButton: {
@@ -1465,13 +1425,13 @@ const styles = StyleSheet.create({
 
     navbarLogo: {
 
-        width: 250,
+        width: 300,
 
-        height: 65,
+        height: 80,
 
-        marginTop: 12,
+        marginTop: 0,
 
-        marginBottom: 4,
+        marginBottom: 0,
 
     },
 
@@ -1538,11 +1498,11 @@ const styles = StyleSheet.create({
 
         fontSize: 16,
 
-        color: '#555555',
+        color: '#FFFFFF',
 
         textAlign: 'center',
 
-        marginTop: 2,
+        marginTop: -4,
 
     },
 
@@ -2444,6 +2404,11 @@ const styles = StyleSheet.create({
 
     },
 
+    inputError: {
+        borderWidth: 1,
+        borderColor: '#FF4D4D',
+    },
+
     submitButton: {
 
         backgroundColor: '#111',
@@ -2588,13 +2553,15 @@ const styles = StyleSheet.create({
 
     pricingSection: {
 
-        paddingVertical: 60,
+        paddingVertical: 0,
 
-        paddingHorizontal: 20,
+        paddingHorizontal: 0,
 
         backgroundColor: COLORS.background,
 
         alignItems: 'center',
+
+        width: '100%',
 
     },
 
@@ -2624,6 +2591,41 @@ const styles = StyleSheet.create({
     pricingFormCard: {
         flex: 1,
         minHeight: 400,
+    },
+
+    pricingFullWidth: {
+        backgroundColor: COLORS.background,
+        paddingHorizontal: 20,
+        paddingBottom: 20,
+        alignItems: 'center',
+        width: '100%',
+    },
+
+    promoOfferWrapper: {
+        backgroundColor: COLORS.background,
+        paddingHorizontal: 20,
+        paddingBottom: 20,
+        alignItems: 'center',
+    },
+
+    promoOfferCard: {
+        borderRadius: 24,
+        padding: 30,
+        alignItems: 'center',
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.3,
+        shadowRadius: 20,
+        elevation: 8,
+        width: '100%',
+        maxWidth: 600,
+    },
+
+    signUpFormWrapper: {
+        backgroundColor: COLORS.background,
+        paddingHorizontal: 20,
+        paddingBottom: 40,
+        alignItems: 'center',
     },
 
     pricingSectionTitle: {
@@ -2668,7 +2670,7 @@ const styles = StyleSheet.create({
 
         width: '100%',
 
-        maxWidth: 500,
+        maxWidth: 600,
 
         shadowColor: COLORS.primary,
 
@@ -2736,6 +2738,12 @@ const styles = StyleSheet.create({
 
     },
 
+    pricingContentMobile: {
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 12,
+    },
+
     pricingLeft: {
 
         alignItems: 'flex-end',
@@ -2746,7 +2754,7 @@ const styles = StyleSheet.create({
 
         fontFamily: 'Rubik_400Regular',
 
-        fontSize: 18,
+        fontSize: 14,
 
         color: COLORS.textDark,
 
@@ -2758,7 +2766,7 @@ const styles = StyleSheet.create({
 
         fontFamily: 'Rubik_400Regular',
 
-        fontSize: 24,
+        fontSize: 18,
 
         color: COLORS.textDark,
 
@@ -2774,7 +2782,7 @@ const styles = StyleSheet.create({
 
         fontFamily: 'Rubik_400Regular',
 
-        fontSize: 24,
+        fontSize: 18,
 
         color: COLORS.primary,
 
